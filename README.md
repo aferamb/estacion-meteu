@@ -11,3 +11,6 @@ Pines pantalla:
 #define TFT_DC   17  // Data Command control pin
 #define TFT_RST  16  // Reset pin (could connect to Arduino RESET pin)
 //#define TFT_BL   22  // LED back-light
+
+
+Libreria para el sensor BME680: [text](https://github.com/boschsensortec/BSEC-Arduino-library)
