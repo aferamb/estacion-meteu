@@ -25,14 +25,16 @@ void setup(void)
   Serial.begin(115200);
   delay(1000);
   pinMode(LED_BUILTIN, OUTPUT);
+  Serial.println("\n--- bme680_prueva1.ino: starting setup (SPI) ---");
   // Initialize HSPI (use global pin constants and global hspi instance)
   hspi.begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // SCK, MISO, MOSI
 
   pinMode(CS_PIN, OUTPUT);
-  digitalWrite(CS_PIN, HIGH); // CS inactivo (alto)
+  digitalWrite(CS_PIN, LOW); // CS inactivo (bajo)
 
   // Inicializa la BSEC usando SPI (pasa la instancia hspi)
   iaqSensor.begin(CS_PIN, hspi);
+  Serial.println("Llamada a iaqSensor.begin() realizada (SPI)");
   output = "\nBSEC library version " + String(iaqSensor.version.major) + "." + String(iaqSensor.version.minor) + "." + String(iaqSensor.version.major_bugfix) + "." + String(iaqSensor.version.minor_bugfix);
   Serial.println(output);
   checkIaqSensorStatus();
@@ -120,8 +122,12 @@ void checkIaqSensorStatus(void)
 void errLeds(void)
 {
   pinMode(LED_BUILTIN, OUTPUT);
+  // Blink slower and print status periodically so we can debug from Serial Monitor
   digitalWrite(LED_BUILTIN, HIGH);
-  delay(100);
+  delay(500);
   digitalWrite(LED_BUILTIN, LOW);
-  delay(100);
+  delay(500);
+  // Print current status codes so user can see them in serial monitor
+  Serial.print("[errLeds] bsecStatus="); Serial.print(iaqSensor.bsecStatus);
+  Serial.print(", bme68xStatus="); Serial.println(iaqSensor.bme68xStatus);
 }
