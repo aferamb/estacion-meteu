@@ -16,7 +16,7 @@ float sound_dB = 0.0;
 const float I_sens = 113e-9;  // Sensibilidad del GUVA-S12SD: 113 nA por mW/cm²
 
 
-#define RL 100000.0   // Resistencia de carga en ohmios (100 kΩ) (guva) igual es 1e6 Ohmios (resistencia de carga R3 = 1MΩ)
+#define RL 1000000.0   // Resistencia de carga en ohmios (100 kΩ) (guva) igual es 1e6 Ohmios (resistencia de carga R3 = 1MΩ)
 
 
 // --- Configuración del sensor de sonido ---
