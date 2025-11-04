@@ -531,8 +531,8 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
     json += "\"temp\": "; json += String(data.temperature_celsius, 2); json += ",";
     json += "\"humid\": "; json += String(data.humidity_percent, 2); json += ",";
     json += "\"aqi\": "; json += String(data.air_quality_index); json += ",";
-  json += "\"lux\": "; json += String(data.luminosity_lux, 2); json += ",";
-  json += "\"sound_db\": "; json += String(data.sound_db, 2); json += ",";
+    json += "\"lux\": "; json += String(data.luminosity_lux, 2); json += ",";
+    json += "\"sound_db\": "; json += String(data.sound_db, 2); json += ",";
     json += "\"atmhpa\": "; json += String(data.atmospheric_pressure_hpa, 2); json += ",";
     json += "\"uv_index\": "; json += String(data.uv_index);
   json += "}";
@@ -543,9 +543,9 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
     // Los nombres exactos pueden variar según la versión de la librería; intento usar
     // nombres razonables y seguros. Si alguna propiedad no existe, el compilador fallará
     // y lo corregiremos según la API de tu versión de BSEC.
-  json += ",\"extra\":{";
-  // Include BSEC status code (first key must not have a leading comma)
-  json += "\"bsec_status\": "; json += String(iaqSensor.bsecStatus);
+    json += ",\"extra\":{";
+    // Include BSEC status code (first key must not have a leading comma)
+    json += "\"bsec_status\": "; json += String(iaqSensor.bsecStatus);
     // BSEC high-level outputs
     json += "\"iaq\": "; json += String(iaqSensor.iaq, 2); json += ",";
     json += "\"static_iaq\": "; json += String(iaqSensor.staticIaq, 2); json += ",";
@@ -555,16 +555,16 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
     // Raw / sensor-level readings
     json += "\"raw_temperature\": "; json += String(iaqSensor.rawTemperature, 2); json += ",";
     json += "\"raw_humidity\": "; json += String(iaqSensor.rawHumidity, 2); json += ",";
-  // pressure provided by BSEC in Pa; convert to hPa for readability
-  json += "\"pressure_hpa\": "; json += String(iaqSensor.pressure / 100.0, 2); json += ",";
-  json += "\"gas_resistance_ohm\": "; json += String(iaqSensor.gasResistance, 2); json += ",";
+    // pressure provided by BSEC in Pa; convert to hPa for readability
+    json += "\"pressure_hpa\": "; json += String(iaqSensor.pressure / 100.0, 2); json += ",";
+    json += "\"gas_resistance_ohm\": "; json += String(iaqSensor.gasResistance, 2); json += ",";
     json += "\"gas_percentage\": "; json += String(iaqSensor.gasPercentage, 2); json += ",";
 
     // Status / housekeeping
-  json += "\"stabilization_status\": "; json += String(iaqSensor.stabStatus); json += ",";
-  json += "\"run_in_status\": "; json += String(iaqSensor.runInStatus); json += ",";
-  json += "\"sensor_heat_comp_temp\": "; json += String(iaqSensor.temperature, 2); json += ",";
-  json += "\"sensor_heat_comp_hum\": "; json += String(iaqSensor.humidity, 2);
+    json += "\"stabilization_status\": "; json += String(iaqSensor.stabStatus); json += ",";
+    json += "\"run_in_status\": "; json += String(iaqSensor.runInStatus); json += ",";
+    json += "\"sensor_heat_comp_temp\": "; json += String(iaqSensor.temperature, 2); json += ",";
+    json += "\"sensor_heat_comp_hum\": "; json += String(iaqSensor.humidity, 2);
     json += "}";
   }
 
