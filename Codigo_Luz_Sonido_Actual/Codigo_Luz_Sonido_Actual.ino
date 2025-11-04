@@ -13,6 +13,8 @@ float lux = 0.0;
 float uv_voltage = 0.0;
 float sound_voltage = 0.0;
 float sound_dB = 0.0;
+const float I_sens = 113e-9;  // Sensibilidad del GUVA-S12SD: 113 nA por mW/cm²
+
 
 #define RL 100000.0   // Resistencia de carga en ohmios (100 kΩ) (guva) igual es 1e6 Ohmios (resistencia de carga R3 = 1MΩ)
 
@@ -26,6 +28,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n=== Iniciando sensores ===");
+  
 
   // --- Inicializar I2C y BH1750 ---
   Wire.begin(21, 22); // SDA = 21, SCL = 22
