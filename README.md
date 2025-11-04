@@ -18,4 +18,4 @@ Libreria para el sensor BME680: [text](https://github.com/boschsensortec/BSEC-Ar
 
 Actualizacion de la libreria PubSubClient para admitir mensaje largo
 Documentos > Arduino > libraries > PubSubClient > src > PubSubClient.h
-#define MQTT_MAX_PACKET_SIZE 512
+#define MQTT_MAX_PACKET_SIZE 1024

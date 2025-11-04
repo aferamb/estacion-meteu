@@ -50,6 +50,9 @@ const uint16_t BG = TFT_GREY; // color de fondo (definido en User_Setup.h)
 const int LEFT_COL_X = 8;
 const int RIGHT_COL_X = 150;
 const int ROW_HEIGHT = 20;
+// Screen size (width x height)
+const int SCREEN_W = 240;
+const int SCREEN_H = 320;
 // Alert box (small, top-right corner)
 const int ALERT_X = 190;
 const int ALERT_Y = 4;
@@ -59,7 +62,16 @@ const int ALERT_H = 14;
 const int ALERT_B_X = 0;
 const int ALERT_B_W = 240;
 const int ALERT_B_H = 28; // height of banner
-const int ALERT_B_Y = 240 - ALERT_B_H - 2; // 2px margin from bottom
+const int ALERT_B_Y = SCREEN_H - ALERT_B_H - 2; // 2px margin from bottom
+
+// Alert & mode state
+bool alertActive = false;
+unsigned long alertStart = 0;
+const unsigned long ALERT_DURATION_MS = 10000UL; // 10 seconds
+String lastFullAlertMessage = ""; // last received alert message
+
+// Mode: normal or error (WTH001 sets error mode, WTH002 resets)
+bool errorMode = false;
 
 // ---------------------- MQTT / WiFi ----------------------
 WiFiClient espClient;
@@ -86,6 +98,38 @@ struct WeatherData {
   float atmospheric_pressure_hpa;
   int uv_index;
 };
+
+// Cache for BSEC/raw fields so we can display the same "extra" data that was published
+struct BsecCache {
+  int bsecStatus;
+  float iaq;
+  float staticIaq;
+  float co2Equivalent;
+  float breathVocEquivalent;
+  float rawTemperature;
+  float rawHumidity;
+  float pressure_hpa;
+  float gasResistance;
+  float gasPercentage;
+  int stabStatus;
+  int runInStatus;
+  float sensorCompTemperature;
+  float sensorCompHumidity;
+};
+
+BsecCache lastBsecCache;
+
+// Cache último dato leído para poder forzar publicación/redibujo
+Location lastLocationCache;
+WeatherData lastWeatherCache;
+bool haveLastData = false;
+// Último estado de publicación
+bool lastPublishOk = false;
+unsigned long lastPublishMillis = 0;
+// Control de refresco de pantalla (igual que la tasa de datos)
+const unsigned long DISPLAY_REFRESH_MS = 1000UL; // 1s (igual que el throttle de datos)
+unsigned long lastDataDrawMs = 0;   // last time we redrew the data area
+unsigned long lastFooterDrawMs = 0; // last time we redrew the footer
 
 // ---------------------- DECLARACIONES ----------------------
 void setup_wifi();
@@ -199,14 +243,42 @@ void loop() {
     checkIaqSensorStatus();
   }
 
-  // Borrar alerta después de 10 s (limpiar la franja inferior)
-  if (lastAlert.length() && millis() - alertTime > 10000) {
-    lastAlert = "";
-    // repintar la franja inferior (banner)
-    tft.fillRect(ALERT_B_X, ALERT_B_Y, ALERT_B_W, ALERT_B_H, BG);
-    // restore text color for subsequent drawings
+  // Handle full-screen alert expiration and footer rendering
+  if (alertActive && (millis() - alertStart >= ALERT_DURATION_MS)) {
+    // Alert time expired: leave a single-line footer with the last message
+    alertActive = false;
+    // restore header and data area
+    drawHeader();
     tft.setTextColor(TFT_WHITE, BG);
     tft.setTextSize(1);
+    // After the overlay expires, immediately redraw data area from the cached
+    // last sensor values so the user sees the most recent readings plus any
+    // extra fields while in errorMode (per user request).
+  if (haveLastData) {
+      // draw cached data lines
+      clearDataArea();
+      drawDataLine(0, String("temperature (C)"), String(lastWeatherCache.temperature_celsius, 1));
+      drawDataLine(1, String("humidity (%)"), String(lastWeatherCache.humidity_percent, 1));
+      drawDataLine(2, String("AQI"), String(lastWeatherCache.air_quality_index));
+      drawDataLine(3, String("luminosity (lux)"), String(lastWeatherCache.luminosity_lux, 1));
+      drawDataLine(4, String("sound (dB)"), String(lastWeatherCache.sound_db, 1));
+      drawDataLine(5, String("pressure (hPa)"), String(lastWeatherCache.atmospheric_pressure_hpa, 1));
+      drawDataLine(6, String("UV index"), String(lastWeatherCache.uv_index));
+      if (errorMode) drawErrorDataLines();
+      lastDataDrawMs = millis();
+    }
+    // Draw footer containing last alert message and last publish status
+    drawFooter();
+  }
+
+  // If not in alertActive state and there is no recent footer (first-run), ensure footer shows something
+  if (!alertActive && lastPublishMillis != 0) {
+    // keep footer updated with latest publish status
+    // (this will redraw footer each loop; it's cheap and keeps UI in sync)
+    if (millis() - lastFooterDrawMs >= DISPLAY_REFRESH_MS) {
+      drawFooter();
+      lastFooterDrawMs = millis();
+    }
   }
 }
 
@@ -238,19 +310,63 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   // Si es una alerta, guardamos y la mostramos en rojo
   // Podemos establecer convención: topic contiene "alerts" o bien topic == sensors/alerts/<id>
   if (String(topic).startsWith("sensors/alerts")) {
-    // store alert and display a prominent banner at the bottom with red background
+    // store alert and display a full-screen red banner with centered text
     lastAlert = msg;
+    lastFullAlertMessage = msg;
     alertTime = millis();
-    // prepare short message (truncate to fit reasonably in banner)
-    String shortMsg = msg;
-    if (shortMsg.length() > 36) shortMsg = shortMsg.substring(0, 33) + "...";
-    // draw red banner and centered white text
-    tft.fillRect(ALERT_B_X, ALERT_B_Y, ALERT_B_W, ALERT_B_H, TFT_RED);
+    alertActive = true;
+    alertStart = millis();
+
+    // Special command messages
+    if (msg == "WTH001") {
+      // Enter error mode
+      errorMode = true;
+      Serial.println("WTH001 received: entering ERROR mode");
+    } else if (msg == "WTH002") {
+      // Exit error mode
+      errorMode = false;
+      Serial.println("WTH002 received: returning to NORMAL mode");
+    }
+
+    // prepare short message that fits on screen
+    String displayMsg = msg;
+    if (displayMsg.length() > 48) displayMsg = displayMsg.substring(0, 45) + "...";
+
+    // draw full-screen red background and centered white text (wrap into up to 2 lines)
+    tft.fillScreen(TFT_RED);
     tft.setTextColor(TFT_WHITE, TFT_RED);
-    tft.setTextSize(2); // larger text for emphasis
-    // Draw centered; use drawCentreString for font index 4 (bigger) if available
-    // fall back to drawCentreString with current text size
-    tft.drawCentreString(shortMsg, ALERT_B_X + ALERT_B_W / 2, ALERT_B_Y + 4, 4);
+    // prefer 2 lines with smaller text so messages don't overflow
+    tft.setTextSize(2);
+    // Split message into up to two lines near the middle (try to split at space)
+    String line1 = displayMsg;
+    String line2 = "";
+    if (displayMsg.length() > 22) {
+      int mid = displayMsg.length() / 2;
+      int splitPos = displayMsg.lastIndexOf(' ', mid);
+      if (splitPos <= 2) splitPos = mid; // fallback to middle
+      line1 = displayMsg.substring(0, splitPos);
+      // Trim leading space on second line
+      line2 = displayMsg.substring(splitPos);
+      if (line2.length() && line2.charAt(0) == ' ') line2 = line2.substring(1);
+    }
+    if (line2.length() == 0) {
+      // single-line centered
+      tft.drawCentreString(line1, SCREEN_W / 2, SCREEN_H / 2 - 8, 2);
+    } else {
+      tft.drawCentreString(line1, SCREEN_W / 2, SCREEN_H / 2 - 12, 2);
+      tft.drawCentreString(line2, SCREEN_W / 2, SCREEN_H / 2 + 8, 2);
+    }
+    // If in errorMode, show a few important BSEC values below the message (smaller)
+    // Per request: do NOT show the detailed "extra" BSEC fields on the emergency overlay.
+    // The extra/raw BSEC fields will be shown in the regular data area (along with
+    // the normal parameters) after the overlay finishes and while errorMode is active.
+    // ensure header area is not accidentally left in red
+
+    // Force publish of last known data immediately (do not wait):
+    if (haveLastData) {
+      // publish last cached data; publishAndShowSensorData will skip redraw due to alertActive
+      publishAndShowSensorData(SENSOR_ID, SENSOR_TYPE, STREET_ID, lastLocationCache, lastWeatherCache);
+    }
   }
 }
 
@@ -277,6 +393,49 @@ void drawHeader() {
   // Column headers: only Param and Valor (no sensor id)
   tft.drawString("Param", LEFT_COL_X, 40, 2);
   tft.drawString("Valor", RIGHT_COL_X, 40, 2);
+}
+
+// Dibuja el footer con el último mensaje de alerta y el estado de la última publicación
+void drawFooter() {
+  // clear footer area
+  tft.fillRect(ALERT_B_X, ALERT_B_Y, ALERT_B_W, ALERT_B_H, BG);
+  tft.setTextSize(1);
+  tft.setTextColor(TFT_WHITE, BG);
+  // left: last alert message (trimmed)
+  String left = lastFullAlertMessage;
+  if (left.length() == 0) left = lastAlert;
+  if (left.length() > 36) left = left.substring(0, 33) + "...";
+  tft.drawString(left, LEFT_COL_X, ALERT_B_Y + 6, 2);
+
+  // right: publish status
+  String pub;
+  if (lastPublishMillis == 0) pub = "Published: -";
+  else pub = (lastPublishOk ? "Published: OK" : "Published: FAIL");
+  tft.drawRightString(pub, ALERT_B_X + ALERT_B_W - 6, ALERT_B_Y + 6, 2);
+  Serial.print("drawFooter: lastPublishOk="); Serial.print(lastPublishOk);
+  Serial.print(" lastPublishMillis="); Serial.println(lastPublishMillis);
+}
+
+// Draw extra BSEC fields in the data area (when in errorMode and not overlay)
+void drawErrorDataLines() {
+  // start after the existing 7 data rows
+  int baseRow = 7;
+  // prepare strings
+  // Prefer cached BSEC values (from last publish) when available so UI matches
+  // what was sent in MQTT. Fall back to iaqSensor if cache not present.
+  if (haveLastData) {
+    drawDataLine(baseRow + 0, "bsec status", String(lastBsecCache.bsecStatus));
+    drawDataLine(baseRow + 1, "breath_voc_eq", String(lastBsecCache.breathVocEquivalent, 2));
+    drawDataLine(baseRow + 2, "gas (Ω)", String(lastBsecCache.gasResistance, 2));
+    drawDataLine(baseRow + 3, "stabilization", String(lastBsecCache.stabStatus));
+    drawDataLine(baseRow + 4, "run_in", String(lastBsecCache.runInStatus));
+  } else {
+    drawDataLine(baseRow + 0, "bsec status", String(iaqSensor.bsecStatus));
+    drawDataLine(baseRow + 1, "breath_voc_eq", String(iaqSensor.breathVocEquivalent, 2));
+    drawDataLine(baseRow + 2, "gas (Ω)", String(iaqSensor.gasResistance, 2));
+    drawDataLine(baseRow + 3, "stabilization", String(iaqSensor.stabStatus));
+    drawDataLine(baseRow + 4, "run_in", String(iaqSensor.runInStatus));
+  }
 }
 
 void clearDataArea() {
@@ -326,19 +485,35 @@ String isoTimeNow() {
 
 // Construye JSON y publica por MQTT; además muestra datos en la pantalla.
 void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, const char* street_id, const Location &loc, const WeatherData &data) {
-  // 1) Mostrar en pantalla (táctica: 7 líneas para 'data')
-  clearDataArea();
-  drawDataLine(0, String("temperature (C)"), String(data.temperature_celsius, 1));
-  drawDataLine(1, String("humidity (%)"), String(data.humidity_percent, 1));
-  drawDataLine(2, String("AQI"), String(data.air_quality_index));
-  drawDataLine(3, String("luminosity (lux)"), String(data.luminosity_lux, 1));
-  drawDataLine(4, String("sound (dB)"), String(data.sound_db, 1));
-  drawDataLine(5, String("pressure (hPa)"), String(data.atmospheric_pressure_hpa, 1));
-  drawDataLine(6, String("UV index"), String(data.uv_index));
+  // 1) Mostrar en pantalla (si no hay un alert full-screen activo)
+  if (!alertActive) {
+    // Only update display at the display refresh rate
+  unsigned long now = millis();
+  bool doDraw = (now - lastDataDrawMs >= DISPLAY_REFRESH_MS);
+  Serial.print("publishAndShowSensorData: alertActive="); Serial.print(alertActive);
+  Serial.print(" lastDataDrawMs="); Serial.print(lastDataDrawMs);
+  Serial.print(" now="); Serial.print(now);
+  Serial.print(" doDraw="); Serial.println(doDraw);
+  if (doDraw) {
+      clearDataArea();
+      drawDataLine(0, String("temperature (C)"), String(data.temperature_celsius, 1));
+      drawDataLine(1, String("humidity (%)"), String(data.humidity_percent, 1));
+      drawDataLine(2, String("AQI"), String(data.air_quality_index));
+      drawDataLine(3, String("luminosity (lux)"), String(data.luminosity_lux, 1));
+      drawDataLine(4, String("sound (dB)"), String(data.sound_db, 1));
+      drawDataLine(5, String("pressure (hPa)"), String(data.atmospheric_pressure_hpa, 1));
+      drawDataLine(6, String("UV index"), String(data.uv_index));
+      // If in errorMode, show extra BSEC lines in data area
+      if (errorMode) drawErrorDataLines();
+      lastDataDrawMs = millis();
+      Serial.println("publishAndShowSensorData: drawn data to screen");
+    }
+  }
 
   // Alerts are handled separately by mqttCallback and cleared in loop();
 
   // 2) Construir JSON
+  // 2) Construir JSON normal (siempre)
   String timestamp = isoTimeNow();
   String json = "{";
   json += "\"sensor_id\": \""; json += sensor_id; json += "\",";
@@ -361,17 +536,79 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
     json += "\"atmhpa\": "; json += String(data.atmospheric_pressure_hpa, 2); json += ",";
     json += "\"uv_index\": "; json += String(data.uv_index);
   json += "}";
-  json += "}";
+
+  // Si estamos en errorMode, añadimos un bloque "extra" con todos los datos crudos/estatus
+  if (errorMode) {
+    // Nota: asumimos que la instancia `iaqSensor` expone campos derivados de BSEC
+    // Los nombres exactos pueden variar según la versión de la librería; intento usar
+    // nombres razonables y seguros. Si alguna propiedad no existe, el compilador fallará
+    // y lo corregiremos según la API de tu versión de BSEC.
+  json += ",\"extra\":{";
+  // Include BSEC status code (first key must not have a leading comma)
+  json += "\"bsec_status\": "; json += String(iaqSensor.bsecStatus);
+    // BSEC high-level outputs
+    json += "\"iaq\": "; json += String(iaqSensor.iaq, 2); json += ",";
+    json += "\"static_iaq\": "; json += String(iaqSensor.staticIaq, 2); json += ",";
+    json += "\"co2_eq\": "; json += String(iaqSensor.co2Equivalent, 2); json += ",";
+    json += "\"breath_voc_eq\": "; json += String(iaqSensor.breathVocEquivalent, 2); json += ",";
+
+    // Raw / sensor-level readings
+    json += "\"raw_temperature\": "; json += String(iaqSensor.rawTemperature, 2); json += ",";
+    json += "\"raw_humidity\": "; json += String(iaqSensor.rawHumidity, 2); json += ",";
+  // pressure provided by BSEC in Pa; convert to hPa for readability
+  json += "\"pressure_hpa\": "; json += String(iaqSensor.pressure / 100.0, 2); json += ",";
+  json += "\"gas_resistance_ohm\": "; json += String(iaqSensor.gasResistance, 2); json += ",";
+    json += "\"gas_percentage\": "; json += String(iaqSensor.gasPercentage, 2); json += ",";
+
+    // Status / housekeeping
+  json += "\"stabilization_status\": "; json += String(iaqSensor.stabStatus); json += ",";
+  json += "\"run_in_status\": "; json += String(iaqSensor.runInStatus); json += ",";
+  json += "\"sensor_heat_comp_temp\": "; json += String(iaqSensor.temperature, 2); json += ",";
+  json += "\"sensor_heat_comp_hum\": "; json += String(iaqSensor.humidity, 2);
+    json += "}";
+  }
+
+  json += "}"; // cerrar objeto raíz
 
   // 3) Publicar por MQTT
   if (mqttClient.connected()) {
-    bool ok = mqttClient.publish(topic_pub, json.c_str()); // retain=true
+    // Before publishing, snapshot BSEC/raw fields into cache so the UI can
+    // display the exact same "extra" values that we publish.
+    lastBsecCache.bsecStatus = iaqSensor.bsecStatus;
+    lastBsecCache.iaq = iaqSensor.iaq;
+    lastBsecCache.staticIaq = iaqSensor.staticIaq;
+    lastBsecCache.co2Equivalent = iaqSensor.co2Equivalent;
+    lastBsecCache.breathVocEquivalent = iaqSensor.breathVocEquivalent;
+    lastBsecCache.rawTemperature = iaqSensor.rawTemperature;
+    lastBsecCache.rawHumidity = iaqSensor.rawHumidity;
+    lastBsecCache.pressure_hpa = iaqSensor.pressure / 100.0;
+    lastBsecCache.gasResistance = iaqSensor.gasResistance;
+    lastBsecCache.gasPercentage = iaqSensor.gasPercentage;
+    lastBsecCache.stabStatus = iaqSensor.stabStatus;
+    lastBsecCache.runInStatus = iaqSensor.runInStatus;
+    lastBsecCache.sensorCompTemperature = iaqSensor.temperature;
+    lastBsecCache.sensorCompHumidity = iaqSensor.humidity;
+
+    bool ok = mqttClient.publish(topic_pub, json.c_str());
     int json_length = json.length();
     Serial.print("Longitud JSON: "); Serial.print(json_length); Serial.println(" bytes");
     Serial.print("Publicado JSON (ok="); Serial.print(ok); Serial.print(") -> "); Serial.println(json);
+    // actualizar estado de publicación
+    lastPublishOk = ok;
+    lastPublishMillis = millis();
   } else {
     Serial.println("No conectado a MQTT: no se publica");
+    lastPublishOk = false;
+    lastPublishMillis = millis();
   }
+
+  // Guardar en caché el último dato publicado para poder forzar re-publicación cuando llegue una alerta
+  lastLocationCache = loc;
+  lastWeatherCache = data;
+  haveLastData = true;
+
+  // Si no hay overlay activo, actualizar footer inmediatamente para mostrar estado de publicación
+  if (!alertActive) drawFooter();
 }
 
 // ---------------------- BSEC / helper ----------------------
