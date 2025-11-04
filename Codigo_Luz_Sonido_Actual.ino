@@ -49,7 +49,7 @@ void loop() {
   // --- Leer sensor BH1750 ---
   lux = lightMeter.readLightLevel();
   if (lux < 0) lux = 0; // Evitar valores negativos en caso de error
-
+/*
 // Prueba A del sensor UV GUVA-S12SD mediante tablas
   // Leer el valor ADC del pin UV
   int uv_raw = analogRead(UV_PIN);
@@ -64,7 +64,7 @@ void loop() {
   // I_photo (A) = 2.67×10⁻⁸ × IUV
   // => IUV = I_photo / (2.67×10⁻⁸)
   float uv_index = photocurrent / (2.67e-8);
-
+*/
 // Prueba B del sensor UV GUVA-S12SD mediante fórmula simplificada con datos de fabricante
 // Photocurrent ≈ 101..125 nA per 1 mW/cm² -> usamos 113 nA como valor medio.
   // Fotocorriente I_photo = Vout / RL
@@ -97,7 +97,7 @@ void loop() {
   Serial.print("\"uv_voltage\": "); Serial.print(uv_voltage, 3); Serial.print(", ");
   Serial.print("\"sound_dB\": "); Serial.print(sound_dB, 1);
   Serial.println("}");
-
+/*
   Serial.print("Prueba A - ");
   Serial.print("Lectura ADC: ");
   Serial.print(uv_raw);
@@ -107,7 +107,7 @@ void loop() {
   Serial.print(photocurrent, 8);
   Serial.print(" A | UV Index: ");
   Serial.println(uv_index, 2);
-
+*/
   Serial.print("Prueba B - ");
   Serial.print("Vout: "); Serial.print(uv_voltage, 4);
   Serial.print(" V | I_photo: "); Serial.print(i_photo, 10);

@@ -21,8 +21,6 @@
 // BME680 / BSEC (usar I2C)
 #include "bsec.h"
 #include <Wire.h>
-// Light & sound sensors
-#include <BH1750.h>
 
 // ---------------------- CONFIGURACIÓN ----------------------
 const char* ssid = "Martin Router King";
@@ -155,33 +153,54 @@ Bsec iaqSensor;
 const uint8_t I2C_SDA = 21; // SDA
 const uint8_t I2C_SCL = 22; // SCL
 
-// Light / Sound / UV sensors pins and params
-const int UV_PIN = 34;       // GUVA-S12SD (sensor UV) - ADC1_6 on ESP32
-const int SOUND_PIN = 35;    // Sensor de sonido XY376 - ADC1_7 on ESP32
-
-// UV sensor parameters (method B)
-const float I_sens = 113e-9; // A per (mW/cm^2) (113 nA per mW/cm^2)
-const float RL = 1000000.0;  // Load resistor in ohms used with GUVA (1MΩ as in your test)
-
-// Sound sensor parameters
-const float SOUND_SENSITIVITY = 0.05; // V/Pa (XY376)
-const float P0 = 0.00002; // reference pressure for dB
-const int SOUND_SAMPLE_COUNT = 100; // samples for RMS
-
-BH1750 lightMeter;
-
 // ---------------------- SETUP ----------------------
 void setup() {
   Serial.begin(115200);
   delay(500);
 
+  // Inicializar TFT
   tft.init();
   tft.setRotation(0);
+  // If the library header defines a backlight pin, try to enable it so the
+  // screen is visible. Many breakout boards require the backlight pin to be
+  // driven HIGH (or LOW) depending on wiring; default to HIGH here.
+#ifdef TFT_BL
+  pinMode(TFT_BL, OUTPUT);
+  digitalWrite(TFT_BL, HIGH);
+  Serial.println("TFT_BL pin defined: driving HIGH to enable backlight");
+#else
+  Serial.println("TFT_BL not defined in User_Setup.h");
+#endif
+
+  // If TFT_RST is available, perform a hardware reset sequence to ensure
+  // the display is in a known state.
+#ifdef TFT_RST
+  pinMode(TFT_RST, OUTPUT);
+  digitalWrite(TFT_RST, LOW);
+  delay(50);
+  digitalWrite(TFT_RST, HIGH);
+  delay(50);
+  Serial.println("TFT_RST toggled (hardware reset)");
+#else
+  Serial.println("TFT_RST not defined in User_Setup.h");
+#endif
+
+  // initialize and draw a diagnostic pattern so we can confirm the display
+  // controller and wiring are correct
+  tft.fillScreen(TFT_RED);
+  delay(200);
+  tft.fillScreen(TFT_GREEN);
+  delay(200);
   tft.fillScreen(BG);
   tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE, BG);
 
   drawHeader();
+  // quick on-screen diagnostic to ensure display is working
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_WHITE, BG);
+  tft.drawCentreString("hola", SCREEN_W/2, SCREEN_H/2 - 10, 4);
+  Serial.println("hola: display initialized (drawn test)");
 
   // Conectar WiFi
   setup_wifi();
@@ -204,12 +223,6 @@ void setup() {
   Serial.println("Inicializando I2C para BME680...");
   Wire.begin(I2C_SDA, I2C_SCL); // SDA, SCL
   Wire.setClock(400000); // fast mode (opcional)
-  // Inicializar BH1750 (sensor de luz) en el mismo bus I2C
-  if (lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) {
-    Serial.println("BH1750 iniciado correctamente");
-  } else {
-    Serial.println("Error al iniciar BH1750. Revisa conexiones I2C (SDA=21, SCL=22)");
-  }
   iaqSensor.begin(BME68X_I2C_ADDR_LOW, Wire); // usar LOW (0x76) si SDO a GND
   Serial.println("Llamada a iaqSensor.begin() realizada (I2C)");
   checkIaqSensorStatus();
@@ -232,10 +245,6 @@ void setup() {
   iaqSensor.updateSubscription(sensorList, 13, BSEC_SAMPLE_RATE_LP);
   checkIaqSensorStatus();
 
-  // Configurar pines analógicos para UV y sonido
-  pinMode(UV_PIN, INPUT);
-  pinMode(SOUND_PIN, INPUT);
-
   // Mostrar nota de inicio
   // Mostrar nota de inicio por encima de la franja de alerta
   tft.drawCentreString("Esperando datos...", 120, ALERT_B_Y - 12, 4);
@@ -247,6 +256,7 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     setup_wifi();
   }
+
   if (!mqttClient.connected()) {
     mqttReconnect();
   }
@@ -257,55 +267,18 @@ void loop() {
     // throttle publishes to at most once por segundo
     if (millis() - lastDemo > 1000) {
       lastDemo = millis();
-      Location loc = {40.3971536, -3.6734246, 650.0, "Arganzuela", "Imperial"};
-      WeatherData d;
-      // Rellenar con lecturas reales cuando estén disponibles
-      d.temperature_celsius = iaqSensor.temperature;        // temperatura compensada
-      d.humidity_percent = iaqSensor.humidity;
-      // BSEC devuelve IAQ (0..500 aprox). Lo usamos como AQI aproximado
-      d.air_quality_index = (int)iaqSensor.iaq;
-      
-      // Leer BH1750 (lux)
-      float lux = lightMeter.readLightLevel();
-      if (lux < 0) lux = 0.0;
-      d.luminosity_lux = lux;
-
-      // Leer sensor de sonido: RMS sobre SOUND_SAMPLE_COUNT muestras
-      float sumSquares = 0.0;
-      for (int i = 0; i < SOUND_SAMPLE_COUNT; i++) {
-        int raw = analogRead(SOUND_PIN);
-        float v = raw * (3.3 / 4095.0);
-        float v_centered = v - (3.3 / 2.0); // centrar en Vcc/2
-        sumSquares += v_centered * v_centered;
-        delayMicroseconds(100);
-      }
-      float rms_v = sqrt(sumSquares / SOUND_SAMPLE_COUNT);
-      float sound_Pa = rms_v / SOUND_SENSITIVITY;
-      float sound_db = 0.0;
-      if (sound_Pa > 0) sound_db = 20.0 * log10(sound_Pa / P0);
-      d.sound_db = sound_db;
-
-      // Leer sensor UV (GUVA-S12SD) — método B
-      int uv_raw = analogRead(UV_PIN);
-      float uv_voltage = uv_raw * (3.3 / 4095.0);
-      float i_photo = 0.0;
-      int uv_index = 0;
-      if (RL > 0 && I_sens > 0) {
-        i_photo = uv_voltage / RL; // A
-        float mW_per_cm2 = i_photo / I_sens; // mW/cm^2
-        float irradiance_Wm2 = mW_per_cm2 * 10.0; // W/m^2
-        float uvf = irradiance_Wm2 * 40.0; // índice UV aproximado
-        if (uvf < 0) uvf = 0;
-        uv_index = (int)round(uvf);
-      }
-      d.uv_index = uv_index;
-
-      d.atmospheric_pressure_hpa = iaqSensor.pressure / 100.0; // convertir Pa -> hPa
-
-      // Debug prints (visible por Serial aunque la pantalla esté muerta)
-      Serial.print("SENSORS: lux="); Serial.print(d.luminosity_lux,2);
-      Serial.print(" lx, sound_dB="); Serial.print(d.sound_db,1);
-      Serial.print(" dB, uv_index="); Serial.println(d.uv_index);
+  Location loc = {40.3971536, -3.6734246, 650.0, "Arganzuela", "Imperial"};
+  WeatherData d;
+  // Rellenar con lecturas reales cuando estén disponibles
+  d.temperature_celsius = iaqSensor.temperature;        // temperatura compensada
+  d.humidity_percent = iaqSensor.humidity;
+  // BSEC devuelve IAQ (0..500 aprox). Lo usamos como AQI aproximado
+  d.air_quality_index = (int)iaqSensor.iaq;
+  // Sensores no presentes: dejar a 0
+  d.luminosity_lux = 0.0;
+  d.sound_db = 0.0;
+  d.atmospheric_pressure_hpa = iaqSensor.pressure / 100.0; // convertir Pa -> hPa
+  d.uv_index = 0;
 
       publishAndShowSensorData(SENSOR_ID, SENSOR_TYPE, STREET_ID, loc, d);
     }
@@ -371,9 +344,6 @@ void setup_wifi() {
   Serial.println("WiFi conectado");
   Serial.print("IP: "); Serial.println(WiFi.localIP());
 }
-
-
-
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   // Convertir a String
@@ -444,9 +414,6 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-
-
-
 void mqttReconnect() {
   // Non-blocking reconnect: only attempt once per MQTT_RETRY_MS
   if (mqttClient.connected()) return;
@@ -465,9 +432,6 @@ void mqttReconnect() {
   }
 }
 
-
-
-
 void drawHeader() {
   tft.fillScreen(BG);
   tft.setTextSize(1);
@@ -478,9 +442,6 @@ void drawHeader() {
   tft.drawString("Param", LEFT_COL_X, 40, 2);
   tft.drawString("Valor", RIGHT_COL_X, 40, 2);
 }
-
-
-
 
 // Dibuja el footer con el último mensaje de alerta y el estado de la última publicación
 void drawFooter() {
@@ -499,11 +460,9 @@ void drawFooter() {
   if (lastPublishMillis == 0) pub = "Published: -";
   else pub = (lastPublishOk ? "Published: OK" : "Published: FAIL");
   tft.drawRightString(pub, ALERT_B_X + ALERT_B_W - 6, ALERT_B_Y + 6, 2);
-  //Serial.print("drawFooter: lastPublishOk="); Serial.print(lastPublishOk);
-  //Serial.print(" lastPublishMillis="); Serial.println(lastPublishMillis);
+  Serial.print("drawFooter: lastPublishOk="); Serial.print(lastPublishOk);
+  Serial.print(" lastPublishMillis="); Serial.println(lastPublishMillis);
 }
-
-
 
 // Draw extra BSEC fields in the data area (when in errorMode and not overlay)
 void drawErrorDataLines() {
@@ -527,9 +486,6 @@ void drawErrorDataLines() {
   }
 }
 
-
-
-
 void clearDataArea() {
   // Fill only the data area and avoid overwriting the bottom alert banner.
   int dataTop = 56;
@@ -543,10 +499,8 @@ void clearDataArea() {
   }
 }
 
-
-
-
 // Dibuja una línea de datos: row 0..n
+// Draw a single data line: left = parameter name, right = value
 void drawDataLine(int row, const String &paramName, const String &value) {
   int y = 56 + row * ROW_HEIGHT;
   // clear the line area
@@ -556,8 +510,6 @@ void drawDataLine(int row, const String &paramName, const String &value) {
   tft.drawString(paramName, LEFT_COL_X, y+2, 2);
   tft.drawRightString(value, RIGHT_COL_X + 80, y+2, 2);
 }
-
-
 
 // Devuelve timestamp ISO8601 UTC con milisegundos si la hora está sincronizada
 String isoTimeNow() {
@@ -578,9 +530,6 @@ String isoTimeNow() {
   snprintf(out, sizeof(out), "%s.%03dZ", buf, ms);
   return String(out);
 }
-
-
-
 
 // Construye JSON y publica por MQTT; además muestra datos en la pantalla.
 void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, const char* street_id, const Location &loc, const WeatherData &data) {
@@ -638,6 +587,10 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
 
   // Si estamos en errorMode, añadimos un bloque "extra" con todos los datos crudos/estatus
   if (errorMode) {
+    // Nota: asumimos que la instancia `iaqSensor` expone campos derivados de BSEC
+    // Los nombres exactos pueden variar según la versión de la librería; intento usar
+    // nombres razonables y seguros. Si alguna propiedad no existe, el compilador fallará
+    // y lo corregiremos según la API de tu versión de BSEC.
     json += ",\"extra\":{";
     // Include BSEC status code (first key must not have a leading comma)
     json += "\"bsec_status\": "; json += String(iaqSensor.bsecStatus);
@@ -654,6 +607,7 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
     json += "\"pressure_hpa\": "; json += String(iaqSensor.pressure / 100.0, 2); json += ",";
     json += "\"gas_resistance_ohm\": "; json += String(iaqSensor.gasResistance, 2); json += ",";
     json += "\"gas_percentage\": "; json += String(iaqSensor.gasPercentage, 2); json += ",";
+
     // Status / housekeeping
     json += "\"stabilization_status\": "; json += String(iaqSensor.stabStatus); json += ",";
     json += "\"run_in_status\": "; json += String(iaqSensor.runInStatus); json += ",";
@@ -661,6 +615,7 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
     json += "\"sensor_heat_comp_hum\": "; json += String(iaqSensor.humidity, 2);
     json += "}";
   }
+
   json += "}"; // cerrar objeto raíz
 
   // 3) Publicar por MQTT
@@ -703,9 +658,6 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
   // Si no hay overlay activo, actualizar footer inmediatamente para mostrar estado de publicación
   if (!alertActive) drawFooter();
 }
-
-
-
 
 // ---------------------- BSEC / helper ----------------------
 void checkIaqSensorStatus(void)
