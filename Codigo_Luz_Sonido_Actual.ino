@@ -14,6 +14,9 @@ float uv_voltage = 0.0;
 float sound_voltage = 0.0;
 float sound_dB = 0.0;
 
+#define RL 100000.0   // Resistencia de carga en ohmios (100 kΩ) (guva) igual es 1e6 Ohmios (resistencia de carga R3 = 1MΩ)
+
+
 // --- Configuración del sensor de sonido ---
 const float sensitivity = 0.05;  // V/Pa (sensibilidad XY376)
 const float P0 = 0.00002;        // Pa, referencia 0 dB SPL
@@ -44,9 +47,33 @@ void loop() {
   lux = lightMeter.readLightLevel();
   if (lux < 0) lux = 0; // Evitar valores negativos en caso de error
 
-  // --- Leer sensor GUVA ---
+// Prueba A del sensor UV GUVA-S12SD mediante tablas
+  // Leer el valor ADC del pin UV
   int uv_raw = analogRead(UV_PIN);
-  uv_voltage = uv_raw * (3.3 / 4095.0);
+
+  // Convertir la lectura ADC en voltaje (ESP32: 12 bits, 3.3V)
+  float uv_voltage = uv_raw * (3.3 / 4095.0);
+
+  // Calcular la fotocorriente generada (I = V / RL)
+  float photocurrent = uv_voltage / RL; // amperios
+
+  // Convertir la corriente en Índice UV usando la pendiente del datasheet:
+  // I_photo (A) = 2.67×10⁻⁸ × IUV
+  // => IUV = I_photo / (2.67×10⁻⁸)
+  float uv_index = photocurrent / (2.67e-8);
+
+// Prueba B del sensor UV GUVA-S12SD mediante fórmula simplificada con datos de fabricante
+// Photocurrent ≈ 101..125 nA per 1 mW/cm² -> usamos 113 nA como valor medio.
+  // Fotocorriente I_photo = Vout / RL
+  float i_photo = uv_voltage / RL;         // amperios
+
+  // mW/cm^2 = I_photo / I_sens
+  float mW_per_cm2 = i_photo / I_sens;
+
+  // Convertimos mW/cm^2 a W/m^2 (1 mW/cm^2 = 10 W/m^2) y luego al Índice UV (x40)
+  float irradiance_Wm2 = mW_per_cm2 * 10.0;
+  float uv_index2 = irradiance_Wm2 * 40.0;
+
 
   // --- Leer sensor de sonido con RMS ---
   float sumSquares = 0.0;
@@ -67,6 +94,23 @@ void loop() {
   Serial.print("\"uv_voltage\": "); Serial.print(uv_voltage, 3); Serial.print(", ");
   Serial.print("\"sound_dB\": "); Serial.print(sound_dB, 1);
   Serial.println("}");
+
+  Serial.print("Prueba A - ");
+  Serial.print("Lectura ADC: ");
+  Serial.print(uv_raw);
+  Serial.print(" | Voltaje: ");
+  Serial.print(uv_voltage, 3);
+  Serial.print(" V | I_photo: ");
+  Serial.print(photocurrent, 8);
+  Serial.print(" A | UV Index: ");
+  Serial.println(uv_index, 2);
+
+  Serial.print("Prueba B - ");
+  Serial.print("Vout: "); Serial.print(uv_voltage, 4);
+  Serial.print(" V | I_photo: "); Serial.print(i_photo, 10);
+  Serial.print(" A | mW/cm2: "); Serial.print(mW_per_cm2, 6);
+  Serial.print(" | UV Index: "); Serial.println(uv_index2, 2);
+
 
   delay(1000); // 1 lectura por segundo
 }

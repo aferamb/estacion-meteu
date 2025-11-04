@@ -23,8 +23,8 @@
 #include <Wire.h>
 
 // ---------------------- CONFIGURACIÓN ----------------------
-const char* ssid = "ASUS";
-const char* password = "atar a la rata";
+const char* ssid = "Martin Router King";
+const char* password = "reconocer";
 
 const char* mqtt_server = "test.mosquitto.org"; // Broker MQTT
 const int mqtt_port = 1883;
