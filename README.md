@@ -12,6 +12,7 @@ Pines pantalla:
 #define TFT_RST  16  // Reset pin (could connect to Arduino RESET pin)
 //#define TFT_BL   22  // LED back-light
 
+//Para el sensor BH1750
 SCL GPIO 22
 SDA GPIO 21
 
