@@ -1,19 +1,3 @@
-/*
-  prueva_pantalla_comp.ino
-
-  Sketch para ESP32 que muestra datos de múltiples sensores en pantalla TFT (TFT_eSPI)
-  y los publica en un servidor MQTT en formato JSON. También recibe avisos desde MQTT
-  y los muestra en rojo junto a los datos.
-
-  Requisitos:
-  - Biblioteca TFT_eSPI (configurada mediante User_Setup.h en la carpeta de la librería)
-  - Biblioteca PubSubClient
-  - Configurar SSID/Password y MQTT broker abajo
-
-  Nota: Este sketch incluye una función pública `publishAndShowSensorData(...)` que
-  puedes llamar desde tu código cuando lleguen datos reales del sensor.
-*/
-
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <TFT_eSPI.h>
@@ -534,13 +518,13 @@ void drawErrorDataLines() {
   if (haveLastData) {
     drawDataLine(baseRow + 0, "bsec status", String(lastBsecCache.bsecStatus));
     drawDataLine(baseRow + 1, "breath_voc_eq", String(lastBsecCache.breathVocEquivalent, 2));
-    drawDataLine(baseRow + 2, "gas (Ω)", String(lastBsecCache.gasResistance, 2));
+    drawDataLine(baseRow + 2, "gas (ohms)", String(lastBsecCache.gasResistance, 2));
     drawDataLine(baseRow + 3, "stabilization", String(lastBsecCache.stabStatus));
     drawDataLine(baseRow + 4, "run_in", String(lastBsecCache.runInStatus));
   } else {
     drawDataLine(baseRow + 0, "bsec status", String(iaqSensor.bsecStatus));
     drawDataLine(baseRow + 1, "breath_voc_eq", String(iaqSensor.breathVocEquivalent, 2));
-    drawDataLine(baseRow + 2, "gas (Ω)", String(iaqSensor.gasResistance, 2));
+    drawDataLine(baseRow + 2, "gas (ohms)", String(iaqSensor.gasResistance, 2));
     drawDataLine(baseRow + 3, "stabilization", String(iaqSensor.stabStatus));
     drawDataLine(baseRow + 4, "run_in", String(iaqSensor.runInStatus));
   }
