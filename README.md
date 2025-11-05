@@ -12,6 +12,11 @@ Pines pantalla:
 #define TFT_RST  16  // Reset pin (could connect to Arduino RESET pin)
 //#define TFT_BL   22  // LED back-light
 
+SCL GPIO 22
+SDA GPIO 21
+
+//Salida del sensor GUVA GPIO 34
+//Salida del sensor XY376 GPIO 35
 
 Libreria para el sensor BME680: [text](https://github.com/boschsensortec/BSEC-Arduino-library)
 
