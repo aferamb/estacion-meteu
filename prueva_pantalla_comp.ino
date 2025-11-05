@@ -25,8 +25,8 @@
 #include <BH1750.h>
 
 // ---------------------- CONFIGURACIÓN ----------------------
-const char* ssid = "Martin Router King";
-const char* password = "reconocer";
+const char* ssid = "ASUS";
+const char* password = "atar a la rata";
 
 const char* mqtt_server = "test.mosquitto.org"; // Broker MQTT
 const int mqtt_port = 1883;
@@ -164,7 +164,7 @@ const float I_sens = 113e-9; // A per (mW/cm^2) (113 nA per mW/cm^2)
 const float RL = 1000000.0;  // Load resistor in ohms used with GUVA (1MΩ as in your test)
 
 // Sound sensor parameters
-const float SOUND_SENSITIVITY = 0.05; // V/Pa (XY376)
+const float SOUND_SENSITIVITY = 0.55; // V/Pa (XY376)
 const float P0 = 0.00002; // reference pressure for dB
 const int SOUND_SAMPLE_COUNT = 100; // samples for RMS
 
@@ -235,6 +235,12 @@ void setup() {
   // Configurar pines analógicos para UV y sonido
   pinMode(UV_PIN, INPUT);
   pinMode(SOUND_PIN, INPUT);
+  // Configure ADC attenuation so analogRead maps ~0..3.3V (ESP32 ADC attenuation)
+  // This improves voltage accuracy for sensors expecting full-scale 3.3V.
+#ifdef ADC_11db
+  analogSetPinAttenuation(SOUND_PIN, ADC_11db);
+  analogSetPinAttenuation(UV_PIN, ADC_11db);
+#endif
 
   // Mostrar nota de inicio
   // Mostrar nota de inicio por encima de la franja de alerta
@@ -271,19 +277,32 @@ void loop() {
       d.luminosity_lux = lux;
 
       // Leer sensor de sonido: RMS sobre SOUND_SAMPLE_COUNT muestras
-      float sumSquares = 0.0;
+      // Use mean-subtracted RMS to avoid assuming the DC bias is exactly Vcc/2.
+      // This is more robust to ADC offset and ensures we compute the AC RMS only.
+      float sumV = 0.0;
+      float sumV2 = 0.0;
       for (int i = 0; i < SOUND_SAMPLE_COUNT; i++) {
         int raw = analogRead(SOUND_PIN);
         float v = raw * (3.3 / 4095.0);
-        float v_centered = v - (3.3 / 2.0); // centrar en Vcc/2
-        sumSquares += v_centered * v_centered;
+        sumV += v;
+        sumV2 += v * v;
         delayMicroseconds(100);
       }
-      float rms_v = sqrt(sumSquares / SOUND_SAMPLE_COUNT);
+      float meanV = sumV / (float)SOUND_SAMPLE_COUNT;
+      float meanV2 = sumV2 / (float)SOUND_SAMPLE_COUNT;
+      float variance = meanV2 - (meanV * meanV);
+      if (variance < 0.0) variance = 0.0;
+      float rms_v = sqrt(variance);
+      // Convert RMS voltage to Pascals using sensor sensitivity (V/Pa)
       float sound_Pa = rms_v / SOUND_SENSITIVITY;
       float sound_db = 0.0;
-      if (sound_Pa > 0) sound_db = 20.0 * log10(sound_Pa / P0);
+      if (sound_Pa > 0.0) sound_db = 20.0 * log10(sound_Pa / P0);
       d.sound_db = sound_db;
+      // Debug: show raw stats
+      //Serial.print("SOUND: meanV="); Serial.print(meanV, 4);
+      //Serial.print(" rms_v="); Serial.print(rms_v, 6);
+      //Serial.print(" Pa="); Serial.print(sound_Pa, 6);
+      //Serial.print(" dB="); Serial.println(sound_db, 2);
 
       // Leer sensor UV (GUVA-S12SD) — método B
       int uv_raw = analogRead(UV_PIN);
@@ -303,9 +322,9 @@ void loop() {
       d.atmospheric_pressure_hpa = iaqSensor.pressure / 100.0; // convertir Pa -> hPa
 
       // Debug prints (visible por Serial aunque la pantalla esté muerta)
-      Serial.print("SENSORS: lux="); Serial.print(d.luminosity_lux,2);
-      Serial.print(" lx, sound_dB="); Serial.print(d.sound_db,1);
-      Serial.print(" dB, uv_index="); Serial.println(d.uv_index);
+      //Serial.print("SENSORS: lux="); Serial.print(d.luminosity_lux,2);
+      //Serial.print(" lx, sound_dB="); Serial.print(d.sound_db,1);
+      //Serial.print(" dB, uv_index="); Serial.println(d.uv_index);
 
       publishAndShowSensorData(SENSOR_ID, SENSOR_TYPE, STREET_ID, loc, d);
     }
