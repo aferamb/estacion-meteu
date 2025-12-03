@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+  mariadb:
+    image: mariadb:10.11
+    container_name: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pass
+      MYSQL_DATABASE: UBICOMP
+      MYSQL_USER: ubicomp
+      MYSQL_PASSWORD: ubicomp_pass
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - ubicomp_net
+
+  tomcat-app:
+    build:
+      context: .
+      dockerfile: docker/tomcat.Dockerfile
+    container_name: tomcat-app
+    restart: always
+    depends_on:
+      - mariadb
+      - mosquitto
+    ports:
+      - "8081:8080"
+    volumes:
+      - tomcat_logs:/usr/local/tomcat/logs
+    networks:
+      - ubicomp_net
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+  mariadb_data:
+  tomcat_logs:
+
+networks:
+  ubicomp_net:
+    driver: bridge

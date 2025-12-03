@@ -9,18 +9,18 @@
 #include <BH1750.h>
 
 // ---------------------- CONFIGURACIÓN ----------------------
-const char* ssid = "ASUS";
-const char* password = "atar a la rata";
+const char* ssid = "cubicua";
+const char* password = "";
 
-const char* mqtt_server = "test.mosquitto.org"; // Broker MQTT
+const char* mqtt_server = "172.29.41.88"; // Broker MQTT
 const int mqtt_port = 1883;
 const char* mqtt_user = "";
 const char* mqtt_pass = "";
 
 // topic donde publicaremos los JSON (puedes cambiarlo)
-const char* topic_pub = "sensors/ws/data";
+const char* topic_pub = "sensors/ST_0686/LABJAV08-G1";
 // topic para recibir avisos (alerts) desde el servidor
-const char* topic_alerts = "sensors/alerts/esp32/#";
+const char* topic_alerts = "sensors/ST_0686/alerts/#";
 
 // Identificador del sensor (se incluye dentro del JSON)
 const char* SENSOR_ID = "LABJAV08-G1";

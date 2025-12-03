@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+  <!-- Resource definition for JDBC DataSource available to applications as java:/comp/env/jdbc/ubicomp -->
+  <Resource name="jdbc/ubicomp" auth="Container" type="javax.sql.DataSource"
+            factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+            driverClassName="org.mariadb.jdbc.Driver"
+            url="jdbc:mariadb://mariadb:3306/UBICOMP?useSSL=false&amp;allowPublicKeyRetrieval=true"
+            username="ubicomp" password="ubicomp_pass"
+            maxActive="20" maxIdle="10" maxWait="10000"/>
+</Context>
