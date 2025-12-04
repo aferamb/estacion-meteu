@@ -386,7 +386,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
   // Si es una alerta, guardamos y la mostramos en rojo
   // Podemos establecer convención: topic contiene "alerts" o bien topic == sensors/alerts/<id>
-  if (String(topic).startsWith("sensors/alerts")) {
+  String topicStr = String(topic_alerts);
+  topicStr.remove(topicStr.length() - 2); // remove "/#"
+  if (String(topic).startsWith(topicStr)) {
     // store alert and display a full-screen red banner with centered text
     lastAlert = msg;
     lastFullAlertMessage = msg;
