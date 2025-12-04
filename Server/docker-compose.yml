@@ -46,7 +46,7 @@ services:
   tomcat-app:
     build:
       context: .
-      dockerfile: docker/tomcat.Dockerfile
+      dockerfile: tomcat/tomcat.Dockerfile
     container_name: tomcat-app
     restart: always
     depends_on:

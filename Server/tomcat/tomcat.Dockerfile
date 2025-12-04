@@ -33,8 +33,10 @@ COPY tomcat/context.xml /usr/local/tomcat/conf/context.xml
 COPY --from=builder /build/target/app.war /usr/local/tomcat/webapps/ROOT.war
 
 # Copy wait-for script and make it executable
-COPY docker/wait-for.sh /usr/local/bin/wait-for.sh
+COPY tomcat/wait-for.sh /usr/local/bin/wait-for.sh
 RUN chmod +x /usr/local/bin/wait-for.sh
+# Normalize line endings inside image in case the host file used CRLF
+RUN sed -i 's/\r$//' /usr/local/bin/wait-for.sh || true
 
 ENV CATALINA_HOME=/usr/local/tomcat
 EXPOSE 8080

@@ -1,4 +1,4 @@
-package servlets;
+package Servlets;
 
 import com.google.gson.Gson;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import Database.ConectionDDBB;
-import logic.Log;
+import Logic.Log;
 
 @WebServlet("/Health")
 public class Health extends HttpServlet {

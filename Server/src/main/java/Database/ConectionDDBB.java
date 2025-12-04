@@ -116,7 +116,7 @@ public class ConectionDDBB
     public static PreparedStatement GetDataBD(Connection con)
     {
     	// Select only the legacy columns expected by the application
-    	return getStatement(con,"SELECT VALUE, DATE FROM UBICOMP.MEASUREMENT");  	
+    	return getStatement(con,"SELECT * FROM UBICOMP.MEASUREMENT");  	
     }
     
     public static PreparedStatement SetDataBD(Connection con)
