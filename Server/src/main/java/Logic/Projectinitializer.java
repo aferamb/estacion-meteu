@@ -1,4 +1,4 @@
-package logic;
+package Logic;
 
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;

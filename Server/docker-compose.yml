@@ -1,18 +1,27 @@
 services:
   mosquitto:
-    image: eclipse-mosquitto:2.0
+    image: eclipse-mosquitto:latest
     container_name: mosquitto
     restart: always
     ports:
-      - "1883:1883"
+      - "1883:1883"  # Puerto MQTT estándar
+      - "9001:9001"  # Puerto WebSocket para MQTT
     volumes:
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
-      - ./mosquitto/config:/mosquitto/config:ro
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/log:/mosquitto/log         # Logs del broker
     networks:
       ubicomp_net:
         aliases:
           - mqtt-broker
+    # Ahora vamos a comprobar que el broker MQTT está funcionando correctamente
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -t health/check -m 'test' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   mariadb:
     image: mariadb:10.11

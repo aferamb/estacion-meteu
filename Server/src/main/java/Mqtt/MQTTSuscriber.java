@@ -4,7 +4,7 @@ import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import Database.Topics;
-import logic.Log;
+import Logic.Log;
 
 public class MQTTSuscriber implements MqttCallback {
 

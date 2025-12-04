@@ -6,8 +6,8 @@ services:
     image: eclipse-mosquitto:latest
     container_name: mqtt-server
     ports:
-      - "1883:1883"  # Puerto MQTT estándar
-      - "9001:9001"  # Puerto WebSocket para MQTT
+      - "1888:1883"  # Puerto MQTT estándar
+      - "9009:9001"  # Puerto WebSocket para MQTT
     volumes:
       - ./mqtt/config:/mosquitto/config   # Configuración personalizada
       - ./mqtt/data:/mosquitto/data       # Persistencia de mensajes
@@ -29,4 +29,4 @@ volumes:
 # Red interna para comunicación entre servicios
 networks:
   app-network:
-    driver: host
+    driver: bridge

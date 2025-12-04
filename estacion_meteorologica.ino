@@ -9,10 +9,10 @@
 #include <BH1750.h>
 
 // ---------------------- CONFIGURACIÓN ----------------------
-const char* ssid = "cubicua";
-const char* password = "";
+const char* ssid = "ASUS";
+const char* password = "atar a la rata";
 
-const char* mqtt_server = "172.29.41.88"; // Broker MQTT
+const char* mqtt_server = "192.168.2.156"; // Broker MQTT
 const int mqtt_port = 1883;
 const char* mqtt_user = "";
 const char* mqtt_pass = "";
