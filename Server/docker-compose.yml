@@ -10,6 +10,11 @@ services:
     volumes:
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
+      - ./mosquitto/config:/mosquitto/config:ro
+    networks:
+      ubicomp_net:
+        aliases:
+          - mqtt-broker
 
   mariadb:
     image: mariadb:10.11

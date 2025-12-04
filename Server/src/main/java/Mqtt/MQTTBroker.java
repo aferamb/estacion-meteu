@@ -24,7 +24,8 @@ public class MQTTBroker {
     }
 
     public static String getUsername() {
-        return password;
+        return username;
+
     }
 
     public static String getPassword() {
