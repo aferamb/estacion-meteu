@@ -1,4 +1,4 @@
-package servlets;
+package Servlets;
 
 import com.google.gson.Gson;
 import java.io.IOException;
@@ -11,9 +11,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import logic.Log;
-import logic.Logic;
-import logic.Measurement;
+import Logic.Log;
+import Logic.Logic;
+import Logic.Measurement;
 
 @WebServlet("/GetDataByDate")
 public class GetDataByDate extends HttpServlet {

@@ -1,4 +1,4 @@
-package logic;
+package Logic;
 
 import java.sql.Timestamp;
 
@@ -6,7 +6,7 @@ public class Measurement
 {
     private int value;
     private Timestamp date;
- 
+
     // constructors
     public Measurement() 
     {

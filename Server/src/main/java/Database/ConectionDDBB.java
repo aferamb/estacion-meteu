@@ -10,7 +10,7 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
-import logic.Log;
+import Logic.Log;
 
 
 public class ConectionDDBB
@@ -27,7 +27,7 @@ public class ConectionDDBB
 	            Context ctx = new InitialContext();
 	            // Get the connection factory configured in Tomcat
 	            DataSource ds = (DataSource) ctx.lookup("java:/comp/env/jdbc/ubicomp");
-	           
+	          
 	            // Obtiene una conexion
 	            con = ds.getConnection();
 				Calendar calendar = Calendar.getInstance();
