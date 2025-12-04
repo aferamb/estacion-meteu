@@ -38,7 +38,9 @@ public class ConectionDDBB
 	            i = intentos;
 	          } catch (NamingException ex)
 	          {
-	            Log.log.error("Error getting connection while trying: " + i + " = " + ex); 
+ 	            Log.log.error("Error getting connection while trying: " + i + " = " + ex); 
+ 	            // Wait a bit before retrying to allow DB to finish initialization
+ 	            try { Thread.sleep(2000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
 	          } catch (SQLException ex)
 	          {
 	            Log.log.error("ERROR sql getting connection while trying: " + i + " = " + ex.getSQLState() + "\n" + ex.toString());
@@ -113,11 +115,13 @@ public class ConectionDDBB
 
     public static PreparedStatement GetDataBD(Connection con)
     {
-    	return getStatement(con,"SELECT * FROM UBICOMP.MEASUREMENT");  	
+    	// Select only the legacy columns expected by the application
+    	return getStatement(con,"SELECT VALUE, DATE FROM UBICOMP.MEASUREMENT");  	
     }
     
     public static PreparedStatement SetDataBD(Connection con)
     {
-    	return getStatement(con,"INSERT INTO UBICOMP.MEASUREMENT VALUES (?,?)");  	
+    	// Insert explicitly into the VALUE and DATE columns to remain compatible
+    	return getStatement(con,"INSERT INTO UBICOMP.MEASUREMENT (VALUE, DATE) VALUES (?,?)");  	
     }
 }

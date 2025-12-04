@@ -20,8 +20,8 @@ RUN mkdir -p target && cp target/*.war target/app.war || true
 ## Runtime: use official Tomcat image to avoid downloading Tomcat tarball
 FROM tomcat:11-jdk17
 
-# Install wget (used to fetch MariaDB JDBC driver) and certificates
-RUN apt-get update && apt-get install -y wget ca-certificates \
+# Install wget (used to fetch MariaDB JDBC driver), mysql client and certificates
+RUN apt-get update && apt-get install -y wget default-mysql-client ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Download MariaDB JDBC driver into Tomcat lib
@@ -32,6 +32,11 @@ RUN wget -q -O /usr/local/tomcat/lib/mariadb-java-client.jar \
 COPY tomcat/context.xml /usr/local/tomcat/conf/context.xml
 COPY --from=builder /build/target/app.war /usr/local/tomcat/webapps/ROOT.war
 
+# Copy wait-for script and make it executable
+COPY docker/wait-for.sh /usr/local/bin/wait-for.sh
+RUN chmod +x /usr/local/bin/wait-for.sh
+
 ENV CATALINA_HOME=/usr/local/tomcat
 EXPOSE 8080
-CMD ["/usr/local/tomcat/bin/catalina.sh", "run"]
+# Wait for MariaDB to be available before starting Tomcat to avoid initial connection refused
+CMD ["/usr/local/bin/wait-for.sh","mariadb","3306","/usr/local/tomcat/bin/catalina.sh","run"]

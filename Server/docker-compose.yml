@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mosquitto:
     image: eclipse-mosquitto:2.0
@@ -30,6 +28,11 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d:ro
     networks:
       - ubicomp_net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -u root -proot_pass"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   tomcat-app:
     build:
@@ -40,6 +43,8 @@ services:
     depends_on:
       - mariadb
       - mosquitto
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_pass
     ports:
       - "8080:8080"
     volumes:

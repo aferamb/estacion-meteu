@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="ISO-8859-1">
+        <meta charset="utf-8">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>  
         <title>Server example</title>
         <style>
@@ -34,7 +34,7 @@
                 $.ajax(
                 {
                     data: {},
-                    url: "/ServerExampleUbicomp/GetData",
+                    url: "/GetData",
                     type: 'post',
                     async: false,
                     success: function (response)
@@ -47,7 +47,7 @@
                         {
                             newRow += "<tr>";
                             newRow += "<td>" + value.date + "</td>";
-                            newRow += "<td>" + value.value + " °C</td>";
+                            newRow += "<td>" + value.value + " &deg;C</td>";
                             newRow += "</tr>";
                         });
                         $("#dataTable").append(newRow);
@@ -61,7 +61,7 @@
                 $.ajax(
                 {
                     data: {value: value},
-                    url: "/UbicompServerExample/SetData",
+                    url: "/SetData",
                     type: 'post',
                     async: false,
                     success: function (response)

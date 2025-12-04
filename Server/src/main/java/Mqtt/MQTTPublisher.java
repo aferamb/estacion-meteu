@@ -1,4 +1,4 @@
-package mqtt;
+package Mqtt;
 
 import logic.Log;
 import org.eclipse.paho.client.mqttv3.MqttClient;

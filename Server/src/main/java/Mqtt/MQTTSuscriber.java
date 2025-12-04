@@ -1,4 +1,4 @@
-package mqtt;
+package Mqtt;
 
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
