@@ -1,10 +1,6 @@
 package Servlets;
 
-import com.google.gson.Gson;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -12,8 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import Logic.Log;
-import Logic.Logic;
-import Logic.Measurement;
 
 @WebServlet("/GetDataByDate")
 public class GetDataByDate extends HttpServlet {
@@ -24,30 +18,8 @@ public class GetDataByDate extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         Log.log.info("--Get Data by date--");
         response.setContentType("application/json;charset=UTF-8");
-        PrintWriter out = response.getWriter();
-        try {
-            String dateParam = request.getParameter("date"); // expected YYYY-MM-DD
-            if (dateParam == null || dateParam.isEmpty()) {
-                out.println("[]");
-                return;
-            }
-            ArrayList<Measurement> values = Logic.getDataFromDate(dateParam);
-            java.util.List<java.util.Map<String,Object>> outList = new java.util.ArrayList<>();
-            for (Measurement m : values) {
-                java.util.Map<String,Object> map = new java.util.HashMap<>();
-                map.put("value", m.getValue());
-                map.put("date", Database.SensorReadingDAO.formatTimestamp(m.getDate()));
-                outList.add(map);
-            }
-            String jsonMeasurements = new Gson().toJson(outList);
-            Log.log.info("Values for date=" + dateParam + " =>" + jsonMeasurements);
-            out.println(jsonMeasurements);
-        } catch (Exception e) {
-            Log.log.error("Exception: " + e);
-            out.println("[]");
-        } finally {
-            out.close();
-        }
+        // This endpoint has been removed. Return 410 Gone.
+        response.sendError(HttpServletResponse.SC_GONE, "Endpoint /GetDataByDate removed");
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
