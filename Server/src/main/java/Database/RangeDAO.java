@@ -5,6 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import Logic.Log;
 
@@ -19,11 +22,33 @@ public class RangeDAO {
     // TTL in ms --- tune as needed
     private static final long TTL_MS = 30_000; // 30 seconds
 
+    // scheduled refresher (refresh-ahead)
+    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "RangeDAO-Refresher");
+        t.setDaemon(true);
+        return t;
+    });
+
+    static {
+        // schedule periodic reloads; initial delay 30s, then every 30s
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                new RangeDAO().reloadAllRanges();
+            } catch (Throwable t) {
+                Log.log.error("Scheduled range reload failed: {}", t);
+            }
+        }, TTL_MS, TTL_MS, TimeUnit.MILLISECONDS);
+    }
+
     public Range getRangeForParameter(String parameter) {
         long now = System.currentTimeMillis();
         if (now - lastLoad > TTL_MS) {
-            // reload all ranges asynchronously but keep it simple and do it synchronously here
-            reloadAllRanges();
+            // do a non-blocking reload by scheduling one if the scheduled task hasn't run yet
+            // but do not block the caller; the scheduled task will refresh soon
+            // If cache is empty (first start), perform a blocking reload to ensure values exist
+            if (cache.isEmpty()) {
+                reloadAllRanges();
+            }
         }
         return cache.get(parameter);
     }
@@ -73,6 +98,14 @@ public class RangeDAO {
             return false;
         } finally {
             conector.closeConnection(con);
+        }
+    }
+
+    public static void shutdownScheduler() {
+        try {
+            scheduler.shutdownNow();
+        } catch (Exception e) {
+            Log.log.error("Error shutting down RangeDAO scheduler: {}", e);
         }
     }
 }

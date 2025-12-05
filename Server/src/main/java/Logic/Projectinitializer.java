@@ -19,6 +19,12 @@ public class Projectinitializer implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
+        // shutdown background tasks
+        try {
+            Database.RangeDAO.shutdownScheduler();
+        } catch (Exception e) {
+            Log.log.error("Error during contextDestroyed: {}", e);
+        }
     }
 
     @Override
@@ -38,5 +44,13 @@ public class Projectinitializer implements ServletContextListener {
         // Make subscriber available to servlets via ServletContext
         sce.getServletContext().setAttribute("mqttSubscriber", suscriber);
         MQTTPublisher.publish(broker, "test", "Hello from Tomcat :)");
+
+        // Ensure parameter ranges cache is loaded at startup (blocking one-time load)
+        try {
+            new Database.RangeDAO().reloadAllRanges();
+            Log.log.info("Parameter ranges loaded at startup");
+        } catch (Exception e) {
+            Log.log.error("Error loading parameter ranges at startup: {}", e);
+        }
     }
 }
