@@ -9,6 +9,8 @@ import Utils.PasswordUtil;
 
 public class UserDAO {
 
+    private static final int DEFAULT_MAX_FAILED = 5;
+
     public static boolean createUser(String username, char[] password, String role) {
         ConectionDDBB cdb = new ConectionDDBB();
         Connection con = null;
@@ -43,10 +45,16 @@ public class UserDAO {
         try {
             con = cdb.obtainConnection(true);
             try (PreparedStatement ps = con.prepareStatement(
-                    "SELECT password_hash, salt FROM users WHERE username=?")) {
+                    "SELECT password_hash, salt, disabled FROM users WHERE username=?")) {
                 ps.setString(1, username);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
+                        int disabled = rs.getInt("disabled");
+                        if (disabled != 0) {
+                            // account is disabled
+                            for (int i = 0; i < password.length; i++) password[i] = '\0';
+                            return false;
+                        }
                         String hash = rs.getString("password_hash");
                         String salt = rs.getString("salt");
                         boolean ok = PasswordUtil.verifyPassword(password, salt, hash);
@@ -58,6 +66,81 @@ public class UserDAO {
             }
         } catch (Exception e) {
             Log.log.error("UserDAO.validateCredentials", e);
+        } finally {
+            cdb.closeConnection(con);
+        }
+        return false;
+    }
+
+    public static boolean isDisabled(String username) {
+        ConectionDDBB cdb = new ConectionDDBB();
+        Connection con = null;
+        try {
+            con = cdb.obtainConnection(true);
+            try (PreparedStatement ps = con.prepareStatement("SELECT disabled FROM users WHERE username=?")) {
+                ps.setString(1, username);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt("disabled") != 0;
+                }
+            }
+        } catch (Exception e) {
+            Log.log.error("UserDAO.isDisabled", e);
+        } finally {
+            cdb.closeConnection(con);
+        }
+        return false;
+    }
+
+    public static boolean recordSuccessfulLogin(String username) {
+        ConectionDDBB cdb = new ConectionDDBB();
+        Connection con = null;
+        try {
+            con = cdb.obtainConnection(false);
+            try (PreparedStatement ps = con.prepareStatement("UPDATE users SET last_login = NOW(), failed_attempts = 0 WHERE username = ?")) {
+                ps.setString(1, username);
+                int rows = ps.executeUpdate();
+                cdb.closeTransaction(con);
+                return rows > 0;
+            }
+        } catch (Exception e) {
+            Log.log.error("UserDAO.recordSuccessfulLogin", e);
+            if (con != null) cdb.cancelTransaction(con);
+        } finally {
+            cdb.closeConnection(con);
+        }
+        return false;
+    }
+
+    public static boolean recordFailedLogin(String username, int maxFailed) {
+        ConectionDDBB cdb = new ConectionDDBB();
+        Connection con = null;
+        try {
+            con = cdb.obtainConnection(false);
+            // increment failed_attempts
+            try (PreparedStatement ps = con.prepareStatement("UPDATE users SET failed_attempts = failed_attempts + 1 WHERE username = ?")) {
+                ps.setString(1, username);
+                ps.executeUpdate();
+            }
+            // read value
+            int failed = 0;
+            try (PreparedStatement ps2 = con.prepareStatement("SELECT failed_attempts FROM users WHERE username = ?")) {
+                ps2.setString(1, username);
+                try (ResultSet rs = ps2.executeQuery()) {
+                    if (rs.next()) failed = rs.getInt("failed_attempts");
+                }
+            }
+            // if exceeds threshold, disable account
+            if (failed >= maxFailed) {
+                try (PreparedStatement ps3 = con.prepareStatement("UPDATE users SET disabled = 1 WHERE username = ?")) {
+                    ps3.setString(1, username);
+                    ps3.executeUpdate();
+                }
+            }
+            cdb.closeTransaction(con);
+            return failed >= maxFailed;
+        } catch (Exception e) {
+            Log.log.error("UserDAO.recordFailedLogin", e);
+            if (con != null) cdb.cancelTransaction(con);
         } finally {
             cdb.closeConnection(con);
         }

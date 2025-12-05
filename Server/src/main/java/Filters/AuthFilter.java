@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.annotation.WebFilter;
+import Database.UserDAO;
+import Logic.Log;
 
 @WebFilter("/*")
 public class AuthFilter implements Filter {
@@ -20,6 +22,21 @@ public class AuthFilter implements Filter {
         }
         HttpSession s = r.getSession(false);
         if (s != null && s.getAttribute("user") != null) {
+            // if accessing /admin/* enforce admin role
+            String user = (String) s.getAttribute("user");
+            if (path.startsWith("/admin")) {
+                try {
+                    String role = UserDAO.getUserRole(user);
+                    if (role == null || !role.equalsIgnoreCase("admin")) {
+                        resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+                        return;
+                    }
+                } catch (Exception e) {
+                    Log.log.error("AuthFilter error checking role: {}", e);
+                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    return;
+                }
+            }
             chain.doFilter(req, res);
         } else {
             resp.sendRedirect(r.getContextPath() + "/login.html");
