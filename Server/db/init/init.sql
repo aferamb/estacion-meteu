@@ -2,16 +2,6 @@
 CREATE DATABASE IF NOT EXISTS UBICOMP CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE UBICOMP;
 
--- Create measurement table expected by the Java code
-CREATE TABLE IF NOT EXISTS MEASUREMENT (
-  VALUE INT NOT NULL,
-  DATE TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- Insert some sample rows
-INSERT INTO MEASUREMENT (VALUE, DATE) VALUES (42, '2025-09-18 09:00:00');
-INSERT INTO MEASUREMENT (VALUE, DATE) VALUES (100, '2025-09-19 10:30:00');
-
 -- Table to store sensor readings from the weather stations
 -- Columns for identification and position are NOT NULL (always provided).
 -- Measurement fields are nullable because sensors may omit some values.

@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Publicar Alerta</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header card">
+      <div class="logo">SU</div>
+      <div><div class="title">Publicar alerta</div><div class="small muted">Publica manualmente a una estación</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Publicar</h3>
+      <form id="pubForm">
+        <div><label>Usar suscripción:<br><select id="subs"></select></label></div>
+        <div style="margin-top:8px"><label>O topic directo:<br><input id="topic" style="width:90%"></label></div>
+        <div style="margin-top:8px"><label>Alerta (clave corta):<br><input id="alert" placeholder="WTH001"></label></div>
+        <div style="margin-top:8px"><label>Mensaje JSON (opcional):<br><textarea id="message" rows="4" style="width:90%" placeholder='{"alerta":"WTH001","info":"..."}'></textarea></label></div>
+        <div style="margin-top:10px"><button class="btn" type="submit">Publicar</button></div>
+      </form>
+      <div id="pubResult" class="small muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    async function loadSubs(){
+      try {
+        const s = await fetchJson('/admin/subscriptions');
+        const sel = document.getElementById('subs'); sel.innerHTML='';
+        const empty = document.createElement('option'); empty.value=''; empty.text='(seleccionar)'; sel.appendChild(empty);
+        (s||[]).forEach(t=>{ const o=document.createElement('option'); o.value=t; o.text=t; sel.appendChild(o); });
+      } catch(e){ console.warn(e); }
+    }
+    document.getElementById('pubForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const subscription = document.getElementById('subs').value;
+      const topic = document.getElementById('topic').value.trim();
+      const alert = document.getElementById('alert').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const body = [];
+      if(subscription) body.push('subscription='+encodeURIComponent(subscription));
+      if(topic) body.push('topic='+encodeURIComponent(topic));
+      if(alert) body.push('alert='+encodeURIComponent(alert));
+      if(message) body.push('message='+encodeURIComponent(message));
+      try {
+        const res = await fetch('/admin/publishAlert',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.join('&')});
+        const j = await res.json(); document.getElementById('pubResult').textContent = j.ok ? ('Publicado en '+j.topic) : ('Error: '+j.error);
+      } catch(e){ document.getElementById('pubResult').textContent = 'Error: '+e.message; }
+    });
+    loadSubs();
+  </script>
+</body>
+</html>

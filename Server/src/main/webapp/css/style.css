@@ -31,3 +31,10 @@ th{background:#f8fbff;color:var(--muted);font-weight:600}
 .small{font-size:13px;color:var(--muted)}
 .center{text-align:center}
 @media (max-width:640px){.header{flex-direction:column;align-items:flex-start}.grid{grid-template-columns:1fr}}
+
+/* Health status badges */
+#healthStatus{font-weight:700;padding:6px 10px;border-radius:8px;display:inline-block}
+.health-ok{background:#e6ffef;color:#056608;border:1px solid #c6f6d5}
+.health-warn{background:#fff9e6;color:#6a4b00;border:1px solid #ffecb3}
+.health-bad{background:#fff0f0;color:#a00;border:1px solid #ffd6d6}
+.health-unset{background:#f3f4f6;color:#374151;border:1px solid #e6e9ee}

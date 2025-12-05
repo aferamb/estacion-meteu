@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Suscripciones</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header card">
+      <div class="logo">SU</div>
+      <div><div class="title">Suscripciones</div><div class="small muted">Crear, eliminar y ver topics suscritos</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Agregar suscripción</h3>
+      <form id="addForm">
+        <input id="topicInput" placeholder="topic (ej. stations/esp32_01)" style="width:80%" required>
+        <button class="btn" type="submit">Suscribir</button>
+      </form>
+      <div id="addResult" class="small muted" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Topics suscritos</h3>
+      <div id="topicsList" class="small muted">Cargando…</div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    async function load() {
+      try {
+        const topics = await fetchJson('/admin/subscriptions');
+        render(topics);
+      } catch (e) { document.getElementById('topicsList').textContent = 'Error: '+e.message; }
+    }
+    function render(list) {
+      const c = document.getElementById('topicsList'); c.innerHTML='';
+      if(!list || list.length===0){ c.innerHTML='<div class="small muted">No hay suscripciones</div>'; return; }
+      const ul = document.createElement('ul');
+      list.forEach(t=>{
+        const li = document.createElement('li'); li.textContent = t + ' '; 
+        const btn = document.createElement('button'); btn.textContent='Quitar'; btn.className='btn';
+        btn.onclick = async ()=>{
+          try {
+            const r = await fetch('/admin/unsubscribe',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'topic='+encodeURIComponent(t)});
+            const j = await r.json(); if(j.ok){ load(); } else alert('Error: '+j.error);
+          } catch(e){ alert(e); }
+        };
+        li.appendChild(btn); ul.appendChild(li);
+      });
+      c.appendChild(ul);
+    }
+    document.getElementById('addForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault(); const topic = document.getElementById('topicInput').value.trim();
+      if(!topic) return;
+      try {
+        const r = await fetch('/admin/subscribe',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'topic='+encodeURIComponent(topic)});
+        const j = await r.json(); document.getElementById('addResult').textContent = j.ok ? 'Suscripción añadida' : ('Error: '+j.error);
+        if(j.ok) { document.getElementById('topicInput').value=''; load(); }
+      } catch(e){ document.getElementById('addResult').textContent = 'Error: '+e.message; }
+    });
+    load();
+  </script>
+</body>
+</html>

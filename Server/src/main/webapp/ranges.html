@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rangos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header card">
+      <div class="logo">SU</div>
+      <div><div class="title">Rangos de parámetros</div><div class="small muted">Configura valores seguros por parámetro</div></div>
+    </div>
+
+    <div class="card">
+      <div id="rangesList">Cargando…</div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    async function load() {
+      try {
+        const rows = await fetchJson('/admin/ranges');
+        render(rows);
+      } catch (e) { document.getElementById('rangesList').textContent = 'Error: '+e.message; }
+    }
+    function render(rows){
+      const c = document.getElementById('rangesList'); c.innerHTML='';
+      if(!rows || rows.length===0){ c.innerHTML='<div class="small muted">No hay rangos</div>'; return; }
+      const table = document.createElement('table');
+      const thead=document.createElement('thead'); thead.innerHTML='<tr><th>Parametro</th><th>Min</th><th>Max</th><th></th></tr>'; table.appendChild(thead);
+      const tbody=document.createElement('tbody');
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        const p=document.createElement('td'); p.textContent=r.parameter; tr.appendChild(p);
+        const minTd=document.createElement('td'); const minIn=document.createElement('input'); minIn.value = r.min===null?'':r.min; minIn.style.width='80px'; minTd.appendChild(minIn); tr.appendChild(minTd);
+        const maxTd=document.createElement('td'); const maxIn=document.createElement('input'); maxIn.value = r.max===null?'':r.max; maxIn.style.width='80px'; maxTd.appendChild(maxIn); tr.appendChild(maxTd);
+        const actTd=document.createElement('td'); const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Guardar'; btn.onclick=async ()=>{
+          try {
+            const body = 'parameter='+encodeURIComponent(r.parameter)+'&min='+encodeURIComponent(minIn.value)+'&max='+encodeURIComponent(maxIn.value);
+            const res = await fetch('/admin/ranges',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+            const j = await res.json(); if(j.ok) { btn.textContent='Guardado'; setTimeout(()=>btn.textContent='Guardar',1000); } else alert('Error: '+j.error);
+          } catch(e) { alert(e); }
+        }; actTd.appendChild(btn); tr.appendChild(actTd);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody); c.appendChild(table);
+    }
+    load();
+  </script>
+</body>
+</html>

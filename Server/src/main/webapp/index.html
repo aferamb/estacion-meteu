@@ -10,9 +10,13 @@
         <div class="container">
             <div class="header card">
                 <div class="logo">SU</div>
-                <div>
+                <div style="flex:1">
                     <div class="title">Server control panel</div>
                     <div class="small muted">Interactúa con los endpoints del servidor</div>
+                </div>
+                <div style="text-align:right;min-width:220px;">
+                    <div id="healthStatus" class="health-unset">...</div>
+                    <div style="margin-top:6px;"><a class="btn" href="subscriptions.html">Suscripciones</a> <a class="btn" href="ranges.html">Rangos</a> <a class="btn" href="alarms.html">Alarmas</a> <a class="btn" href="publish_alert.html">Publicar alerta</a></div>
                 </div>
             </div>
 
@@ -40,5 +44,9 @@
             <div class="card small muted center">Theme: azul claro • blanco • gris — UI creada para interactuar con servlets</div>
         </div>
         <script src="js/app.js"></script>
+                <script>
+                    // start health polling every 10 seconds
+                    try { startHealthPolling(10); } catch(e) { console.warn('health polling failed', e); }
+                </script>
     </body>
 </html>

@@ -30,3 +30,27 @@ async function fetchJson(url, opts){
 }
 
 function validateStrictTs(s){ if(!s) return true; return strictTsRegex.test(s); }
+
+// Health polling helper: fetches `/Health` and updates element with id `healthStatus`.
+async function fetchHealthStatus() {
+  try {
+    const resp = await fetch('Health');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const txt = await resp.text();
+    return txt.trim();
+  } catch (e) {
+    return 'unreachable';
+  }
+}
+
+function startHealthPolling(intervalSeconds) {
+  const el = document.getElementById('healthStatus');
+  if (!el) return;
+  async function tick() {
+    const s = await fetchHealthStatus();
+    el.textContent = s;
+    el.className = 'health-' + (s === 'OK' ? 'ok' : s === 'DEGRADED' ? 'warn' : 'bad');
+  }
+  tick();
+  return setInterval(tick, Math.max(5, intervalSeconds|0) * 1000);
+}

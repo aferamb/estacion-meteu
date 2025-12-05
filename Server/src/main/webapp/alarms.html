@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Alarmas</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header card">
+      <div class="logo">SU</div>
+      <div><div class="title">Alarmas</div><div class="small muted">Ver alarmas activas y cerradas</div></div>
+    </div>
+
+    <div class="card">
+      <h3>Alarmas activas</h3>
+      <div id="activeList">Cargando…</div>
+    </div>
+
+    <div class="card">
+      <h3>Alarmas cerradas</h3>
+      <div id="closedList">Cargando…</div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    async function load() {
+      try {
+        const active = await fetchJson('/admin/alarms?active=1&limit=200');
+        renderList('activeList', active);
+        const closed = await fetchJson('/admin/alarms?active=0&limit=200');
+        renderList('closedList', closed);
+      } catch (e) { console.error(e); }
+    }
+    function renderList(id, rows){
+      const c = document.getElementById(id); c.innerHTML='';
+      if(!rows || rows.length===0){ c.innerHTML='<div class="small muted">No hay registros</div>'; return; }
+      const table = document.createElement('table');
+      const thead=document.createElement('thead'); thead.innerHTML='<tr><th>ID</th><th>Sensor</th><th>Param</th><th>Valor</th><th>Triggered</th><th>Resolved</th></tr>'; table.appendChild(thead);
+      const tbody=document.createElement('tbody');
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = '<td>'+r.id+'</td><td>'+ (r.sensor_id||r.street_id||'') +'</td><td>'+ (r.parameter||'') +'</td><td>'+ (r.triggered_value||'') +'</td><td>'+ (r.triggered_at||'') +'</td><td>'+ (r.resolved_at||'') +'</td>';
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody); c.appendChild(table);
+    }
+    load();
+  </script>
+</body>
+</html>
