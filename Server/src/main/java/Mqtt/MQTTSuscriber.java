@@ -6,6 +6,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import Logic.Log;
 import Database.SensorReadingDAO;
 import Database.SubscriptionDAO;
+import Logic.AlarmManager;
 
 import java.util.List;
 
@@ -91,6 +92,12 @@ public class MQTTSuscriber implements MqttCallback {
             boolean ok = SensorReadingDAO.insertFromTopicPayload(topic, payload);
             if (!ok) {
                 Log.logmqtt.warn("Failed to persist sensor reading for topic {}", topic);
+            }
+            // After persisting, run alarm checks (compare values against configured ranges)
+            try {
+                AlarmManager.process(topic, payload);
+            } catch (Exception e) {
+                Log.logmqtt.error("Error running alarm manager: {}", e);
             }
         } catch (Exception e) {
             Log.logmqtt.error("Error handling incoming MQTT message: {}", e);
