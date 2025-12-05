@@ -10,7 +10,8 @@
   <div class="container">
     <div class="header card">
       <div class="logo">SU</div>
-      <div><div class="title">Alarmas</div><div class="small muted">Ver alarmas activas y cerradas</div></div>
+      <div style="flex:1"><div class="title">Alarmas</div><div class="small muted">Ver alarmas activas y cerradas</div></div>
+      <div style="text-align:right;min-width:140px;"><a class="btn secondary" href="logout">Cerrar sesión</a></div>
     </div>
 
     <div class="card">
@@ -26,14 +27,21 @@
 
   <script src="js/app.js"></script>
   <script>
-    async function load() {
+    // Polling-driven refresh: checks for changes in active/closed alarm sets and updates view only when different.
+    let prevActiveIds = new Set();
+    let prevClosedIds = new Set();
+    async function fetchLists() {
       try {
         const active = await fetchJson('/admin/alarms?active=1&limit=200');
-        renderList('activeList', active);
         const closed = await fetchJson('/admin/alarms?active=0&limit=200');
-        renderList('closedList', closed);
-      } catch (e) { console.error(e); }
+        return { active, closed };
+      } catch (e) { console.error('Error fetching alarms', e); return null; }
     }
+
+    function idsOf(list) { if(!list) return new Set(); return new Set(list.map(r=>r.id)); }
+
+    function equalsSet(a,b){ if(a.size!==b.size) return false; for(const x of a) if(!b.has(x)) return false; return true; }
+
     function renderList(id, rows){
       const c = document.getElementById(id); c.innerHTML='';
       if(!rows || rows.length===0){ c.innerHTML='<div class="small muted">No hay registros</div>'; return; }
@@ -47,7 +55,26 @@
       });
       table.appendChild(tbody); c.appendChild(table);
     }
-    load();
+
+    async function checkAndRefresh() {
+      const lists = await fetchLists();
+      if(!lists) return;
+      const newActive = idsOf(lists.active);
+      const newClosed = idsOf(lists.closed);
+      const activeChanged = !equalsSet(newActive, prevActiveIds);
+      const closedChanged = !equalsSet(newClosed, prevClosedIds);
+      if (activeChanged || closedChanged) {
+        // update previous sets
+        prevActiveIds = newActive;
+        prevClosedIds = newClosed;
+        // render lists
+        renderList('activeList', lists.active);
+        renderList('closedList', lists.closed);
+      }
+    }
+
+    // initial load and then poll every 5 seconds
+    (async ()=>{ await checkAndRefresh(); setInterval(checkAndRefresh, 5000); })();
   </script>
 </body>
 </html>

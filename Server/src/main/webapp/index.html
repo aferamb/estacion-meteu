@@ -14,9 +14,9 @@
                     <div class="title">Server control panel</div>
                     <div class="small muted">Interactúa con los endpoints del servidor</div>
                 </div>
-                <div style="text-align:right;min-width:220px;">
+                <div style="text-align:right;min-width:260px;">
                     <div id="healthStatus" class="health-unset">...</div>
-                    <div style="margin-top:6px;"><a class="btn" href="subscriptions.html">Suscripciones</a> <a class="btn" href="ranges.html">Rangos</a> <a class="btn" href="alarms.html">Alarmas</a> <a class="btn" href="publish_alert.html">Publicar alerta</a></div>
+                    <div style="margin-top:6px;"><a class="btn secondary" href="logout">Cerrar sesión</a></div>
                 </div>
             </div>
 
@@ -33,20 +33,53 @@
                         <div class="controls"><a class="btn" href="readings_query.html">Abrir</a></div>
                     </div>
                     <!-- Removed legacy GetData/GetDataByDate/SetData UIs -->
-                    <div class="card">
-                        <h3>Administración de usuarios</h3>
-                        <p class="small">Crear y listar usuarios (admin)</p>
-                        <div class="controls"><a class="btn" href="users.html">Usuarios</a> <a class="btn" href="create_user.html">Crear</a></div>
-                    </div>
+                        <div class="card">
+                            <h3>Administración de usuarios</h3>
+                            <p class="small">Crear y listar usuarios (admin)</p>
+                            <div class="controls"><a class="btn" href="users.html">Usuarios</a> <a class="btn" href="create_user.html">Crear</a></div>
+                        </div>
+                        <div class="card">
+                            <h3>Suscripciones</h3>
+                            <p class="small">Ver, agregar y quitar topics suscritos</p>
+                            <div class="controls"><a class="btn" href="subscriptions.html">Abrir</a></div>
+                        </div>
+                        <div class="card">
+                            <h3>Rangos</h3>
+                            <p class="small">Configurar rangos seguros por parámetro</p>
+                            <div class="controls"><a class="btn" href="ranges.html">Abrir</a></div>
+                        </div>
+                        <div class="card">
+                            <h3>Alarmas</h3>
+                            <p class="small">Ver alarmas activas y cerradas</p>
+                            <div class="controls"><a class="btn" href="alarms.html">Abrir</a></div>
+                        </div>
+                        <div class="card">
+                            <h3>Publicar alerta</h3>
+                            <p class="small">Enviar alertas manualmente a una estación</p>
+                            <div class="controls"><a class="btn" href="publish_alert.html">Abrir</a></div>
+                        </div>
                 </div>
             </div>
 
-            <div class="card small muted center">Theme: azul claro • blanco • gris — UI creada para interactuar con servlets</div>
+            <div class="card">
+                <h3>Estado en tiempo real</h3>
+                <div class="grid" style="grid-template-columns: 300px 1fr; gap:12px;">
+                    <div class="card">
+                        <h4>Estaciones conectadas</h4>
+                        <div id="liveStations" class="small muted">Cargando…</div>
+                    </div>
+                    <div class="card">
+                        <h4>Mensajes en tiempo real</h4>
+                        <div id="liveMessages" class="small muted">Cargando…</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <script src="js/app.js"></script>
+                <script src="js/app.js"></script>
                 <script>
-                    // start health polling every 10 seconds
+                    // start health polling every 10 seconds and live feed every 2 seconds
                     try { startHealthPolling(10); } catch(e) { console.warn('health polling failed', e); }
+                    try { startLiveFeed(2); } catch(e) { console.warn('live feed failed', e); }
                 </script>
     </body>
 </html>

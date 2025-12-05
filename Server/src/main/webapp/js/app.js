@@ -54,3 +54,42 @@ function startHealthPolling(intervalSeconds) {
   tick();
   return setInterval(tick, Math.max(5, intervalSeconds|0) * 1000);
 }
+
+// Live feed: poll /admin/live and update stations and messages
+function startLiveFeed(intervalSeconds) {
+  const stationsEl = document.getElementById('liveStations');
+  const messagesEl = document.getElementById('liveMessages');
+  if (!stationsEl || !messagesEl) return;
+  function renderStations(list) {
+    stationsEl.innerHTML = '';
+    if (!list || list.length === 0) { stationsEl.innerHTML = '<div class="small muted">No hay estaciones conectadas</div>'; return; }
+    const ul = document.createElement('ul');
+    list.forEach(s => { const li = document.createElement('li'); li.textContent = (s.sensor_id||'desconocido') + (s.last_seen?(' — '+s.last_seen):''); ul.appendChild(li); });
+    stationsEl.appendChild(ul);
+  }
+  function renderMessages(list) {
+    messagesEl.innerHTML = '';
+    if (!list || list.length === 0) { messagesEl.innerHTML = '<div class="small muted">Sin mensajes recientes</div>'; return; }
+    const wrap = document.createElement('div'); wrap.className = 'table-wrap';
+    const table = document.createElement('table');
+    const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Sensor</th><th>Hora</th><th>Temp</th><th>Humid</th><th>AQI</th><th>Lux</th></tr>'; table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    list.forEach(m => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+(m.sensor_id||'')+'</td><td>'+(m.recorded_at||'')+'</td><td>'+(m.temp==null?'':m.temp)+'</td><td>'+(m.humid==null?'':m.humid)+'</td><td>'+(m.aqi==null?'':m.aqi)+'</td><td>'+(m.lux==null?'':m.lux)+'</td>';
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody); wrap.appendChild(table); messagesEl.appendChild(wrap);
+  }
+  async function tick() {
+    try {
+      const data = await fetchJson('/admin/live');
+      if (data && data.stations) renderStations(data.stations);
+      if (data && data.messages) renderMessages(data.messages);
+    } catch (e) {
+      console.warn('live feed error', e);
+    }
+  }
+  tick();
+  return setInterval(tick, Math.max(1, intervalSeconds|0) * 1000);
+}
