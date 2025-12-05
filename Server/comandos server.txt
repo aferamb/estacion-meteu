@@ -1,57 +1,121 @@
 COMANDOS CMD
 
-Ejemplos de uso (CMD / curl) para publis
-- Publicar usando `alert` y topic directo:
-	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" -d "alert=WTH001"
-	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" --data-urlencode "message={"alerta":"WTH001","info":"Prueba"}"
-- Publicar usando message (JSON completo) y topic directo:
-	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" --data-urlencode "message="WTH002""
-- Publicar usando subscription (stored topic) — server resolverá/persistirá alert_topic:
-	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "subscription=sensors/ST_0686/LABJAV08-G1" -d "alert=WTH002"
-- Obtener todas las activas:
-    - curl (ROOT context)curl 'http://<host>/admin/alarms?active=1'
-- Obtener últimas 50 alarmas para un sensor:
-    - curl 'http://localhost:8080/admin/alarms?sensor_id=ST_0686&limit=50'
+Listado de Servlets — endpoint, método, ejemplo de entrada/salida y qué ejecuta el servidor.  Todos ellos se pueden insentar por CMD o línea de comandos pero funciona mejor si se inserta la dirección del Servlet en un buscador.
+Por ejemplo http://localhost:8080/admin/subscribe (habiendo iniciado sesion previamente)
 
-Consulta de daton en la DB de sensores
-	curl "http://localhost:8080/sensor/readings?sensor_id=LABJAV08-G1&limit=10”
-
-- Ejemplos correctos (Windows CMD). para suscribirse a topics y cosas
-    - Subscribe:
+/admin/subscribe:
+Método: POST
+Ejemplo entrada: form-data topic=sensors/ST_0686/LABJAV08-G1
+Ejemplo salida: {"ok":true} o {"ok":false,"error":"missing topic parameter"}.
+Qué hace en el servidor: llama a SubscriptionDAO.addSubscription(topic) para introducir la suscripción en la tabla subscriptions de nuestra base de datos. Si el ServletContext contiene un mqttSubscriber, invoca subscribeTopic(topic) para que el backend se suscriba inmediatamente.
 curl -i -b cookies.txt -X POST "http://localhost:8080/admin/subscribe" -d "topic=sensors/ST_0686/LABJAV08-G1"
-    - Unsubscribe:
+
+/admin/unsubscribe:
+Método: POST
+Ejemplo entrada: form-data topic=sensors/ST_0686/LABJAV08-G1
+Ejemplo salida: {"ok":true} o {"ok":false,"error":"missing topic parameter"}.
+Qué hace en el servidor: borra la fila de subscriptions en la base de datos gracias a SubscriptionDAO.removeSubscription(topic) y, si existe, pide al mqttSubscriber que se desuscriba (unsubscribeTopic).
 curl -i -b cookies.txt -X POST "http://localhost:8080/admin/unsubscribe" -d "topic=sensors/ST_0686/LABJAV08-G1"
-    - List subscriptions:
+/admin/subscriptions:
+Método: GET
+Ejemplo salida: ["sensors/ST_0686/data","sensors/area42/#"]
+Qué hace en el servidor: devuelve la lista de topics activos leyendo SubscriptionDAO.getAllActiveTopics().
 curl -i -b cookies.txt "http://localhost:8080/admin/subscriptions"
 
+/admin/publishAlert:
+Método: POST
+Ejemplo entrada (modo subscription): form-data subscription=sensors/ST_0686/data&alert=MANUAL_TEST
+Ejemplo salida: {"ok":true,"topic":"sensors/ST_0686/data/alerts","payload":"{\"alerta\":\"MANUAL_TEST\"}"}
+Qué hace en el servidor: determina publishTopic (usa el topic directo o busca alert_topic para la subscription), persiste el alert_topic si hace falta guardandola en la base de datos (SubscriptionDAO.updateAlertTopic(...)). Después construye el payload y publica via MQTTPublisher.publish().
+Publicar usando `alert` y topic directo:
+curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" -d "alert=WTH001"
+curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" --data-urlencode "message={"alerta":"WTH001","info":"Prueba"}"
+Publicar usando message (JSON completo) y topic directo:
+curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" --data-urlencode "message="WTH002""
+-Publicar usando subscription (stored topic) — server resolverá/persistirá alert_topic:
+curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "subscription=sensors/ST_0686/LABJAV08-G1" -d "alert=WTH002"
 
-Listar usuarioscurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/login
+/sensor/readings:
+Método: GET
+Parámetros: opcionales sensor_id, street_id, start, end, limit.
+Son parámetros opcionales ya que si los pones afectan la consulta; si no los pones obtienes las filas más recientes:
+sensor_id: filtra por columna sensor_id.
+street_id: filtra por columna street_id.
+start: incluye solo filas con recorded_at >= start. Tiene el formato yyyy-MM-ddHH:mm:ss (ej. 2025-12-0504:02:33).
+end: incluye solo filas con recorded_at <= end. Tiene el formato yyyy-MM-ddHH:mm:ss (ej. 2025-12-0504:02:33).
+limit: número máximo de filas a devolver (por defecto en este servlet: 100).
+Ejemplo salida: JSON array de filas como: [{"id":123,"sensor_id":"ST_0686","temp":35.0,"recorded_at":"2025-12-05 15:56:00"}, ...]
+Qué hace en el servidor: construye una consulta SQL sobre sensor_readings con filtros parametrizados, ejecuta y devuelve las filas como JSON (con formato de timestamp para el apartado de recorded_at).
+curl "http://localhost:8080/sensor/readings?sensor_id=LABJAV08-G1&limit=10”
+
+/api/readings/query:
+Método: GET
+Parámetros: start, end, filter, value, op, sortBy, order, limit, offset
+Ejemplo: /api/readings/query?filter=temp&op=%3E&value=30&limit=100
+Ejemplo salida: JSON array con filas que cumplen la consulta.
+Qué hace en el servidor: valida y normaliza parámetros, construye QueryParams y llama SensorReadingDAO.queryReadings(params) y devuelve los resultados en JSON.
+Rango temporal
+curl -i -b cookies.txt "http://localhost:8080/api/readings/query?start=2025-12-0100:00:00&end=2025-12-0200:00:00"
+Filtrar por sensor_id exacto
+curl -i -b cookies.txt "http://localhost:8080/api/readings/query?filter=sensor_id&value=12&op=="
+Rango + filtro + ordenar por recorded_at desc
+curl -i -b cookies.txt "http://localhost:8080/api/readings/query?start=2025-12-0100:00:00&end=2025-12-0200:00:00&filter=temp&value=20&op=>=&sortBy=recorded_at&order=desc"
+Búsqueda por texto usando LIKE (devuelve coincidencias parciales)
+curl -i -b cookies.txt "http://localhost:8080/api/readings/query?filter=district&value=Arganzuela&op=like&limit=50"
+
+/admin/ranges:
+Método: GET / POST
+GET ejemplo salida: [{"parameter":"temp","min":-40.0,"max":60.0},...]
+POST ejemplo entrada: form-data parameter=temp&min=0&max=40 → salida {"ok":true}
+Qué hace en el servidor: GET lee parameter_ranges y devuelve todos los rangos; POST actualiza o crea un rango mediante RangeDAO.updateRange(...) y actualiza la caché.
+curl -i -b cookies.txt http://localhost:8080/admin/ranges
+curl -i -b cookies.txt -X POST -d "parameter=temp&min=0&max=50" http://localhost:8080/admin/ranges
+
+/admin/alarms:
+Método: GET
+Parámetros: opcionales sensor_id, parameter, active, limit
+Ejemplo salida: [{"id":1,"sensor_id":"ST_0686","parameter":"temp","triggered_value":45.0,"triggered_at":"...","active":true}, ...]
+Qué hace en el servidor: consulta la tabla sensor_alarms aplicando filtros y devuelve las alarmas como JSON.
+Obtener todas las activas e inactivas:
+curl -i -b cookies.txt "http://localhost:8080/admin/alarms?active=1”
+curl -i -b cookies.txt "http://localhost:8080/admin/alarms?active=0”
+Obtener últimas 50 alarmas para un sensor:
+curl 'http://localhost:8080/admin/alarms?sensor_id=ST_0686&limit=50'
+
+/admin/users/create:
+Método: POST
+Ejemplo entrada: form-data username=alice&password=secret&role=admin
+Ejemplo salida: responde 201 Created si OK, 400 si faltan parámetros, 500 si fallo.
+Qué hace en el servidor: llama UserDAO.createUser(username,password,role) para persistir el usuario.
+curl -i -b cookies.txt -X POST -d "username=alex&password=alex&role=admin" http://localhost:8080/admin/users/create
+/admin/users/delete:
+Método: POST
+Ejemplo entrada: form-data username=alice
+Ejemplo salida: responde 204 No Content si ok, 400 si falta username.
+Qué hace en el servidor: llama UserDAO.deleteUser(username).
+curl -i -b cookies.txt -X POST -d "username=newuser" http://localhost:8080/admin/users/delete
+
+/admin/users:
+Método: GET
+Ejemplo salida: JSON con lista de usuarios (según UserDAO.listUsersJson())
+Qué hace en el servidor: devuelve el JSON generado por UserDAO con usuarios y metadatos.
 curl -i -b cookies.txt http://localhost:8080/admin/users
-
-INICIO SESION
+/login:
+Método: GET (muestra login.html) / POST (form username/password)
+Ejemplo salida (POST aceptado): redirección a /index.html (login correcto). Si llega a dar fallo redirige a /login.html?error=1 o ?error=locked.
+Qué hace en el servidor: valida credenciales con UserDAO.validateCredentials(...), maneja intentos fallidos y bloqueo (recordFailedLogin), registra login exitoso (recordSuccessfulLogin) y protege contra fixation creando nueva sesión.
 curl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/login
-
 curl -i -c cookiesuser.txt -X POST -d "username=testuser1&password=testpass" http://localhost:8080/login
 
-{"sensor_id": "LABJAV08-G1","sensor_type": "weather","street_id": "ST_0686","timestamp": "2025-12-05T04:02:33.926Z","location": {"lat": 40.397154,"long": -3.673425,"alt": 650.0,"district": "Arganzuela","neighborhood": "Imperial"},"data": {"temp": 24.84,"humid": 48.20,"aqi": 50,"lux": 360.83,"sound_db": 64.89,"atmhpa": 933.96,"uv_index": 0}}
+/logout:
+Método: normalmente GET or POST
+Ejemplo: visitar /logout hace redirección a /login.html
+Qué hace en el servidor: invalida la sesión del usuario (logout) y redirige al formulario de login. (Comportamiento estándar en el proyecto: invalida HttpSession y redirige.)
+curl -i -b cookiesuser.txt -c cookiesuser.txt http://localhost:8080/logout
 
-http://localhost:8080/api/readings/query?start=2025-12-0500:00:00&end=2025-12-0500:00:00
-IMPORY¿TANTE QUE LAS FECHAS ESTEN 2025-12-0500:00:00 y no 2025-12-05T00:00:00Z
+/Health:
+Método: GET
+Ejemplo salida: {"status":"ok","db":"connected"} o {"status":"error","db":"not_connected","message":"..."}
+Qué hace en el servidor: intenta obtener una conexión a la base de datos y devuelve estado JSON indicando si la base de datos está accesible. Sirve para pruebas rápidas HTTP del backend.
+curl -i -b cookies.txt http://localhost:8080/Health
 
-
-
-# rango temporal
-
-curl "[http://localhost:8080/api/readings/query?start=2025-12-01T00:00:00Z&end=2025-12-02T00:00:00Z](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?start=2025-12-01T00:00:00Z&end=2025-12-02T00:00:00Z)"
-
-# filtrar por sensor_id exacto
-
-curl "[http://localhost:8080/api/readings/query?filter=sensor_id&value=12&op==](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?filter=sensor_id&value=12&op==)"
-
-# rango + filtro + ordenar por recorded_at desc
-
-curl "[http://localhost:8080/api/readings/query?start=1700000000000&end=1700100000000&filter=temp&value=20&op=>=&sortBy=recorded_at&order=desc](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?start=1700000000000&end=1700100000000&filter=temp&value=20&op=%3E=&sortBy=recorded_at&order=desc)"
-
-# búsqueda por texto usando LIKE (devuelve coincidencias parciales)
-
-curl "[http://localhost:8080/api/readings/query?filter=district&value=center&op=like&limit=50](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?filter=district&value=center&op=like&limit=50)"
