@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>SetData</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="card header">
+        <div class="logo">SD</div>
+        <div>
+          <div class="title">SetData</div>
+          <div class="small muted">Interfaz para insertar lecturas vía formulario</div>
+        </div>
+      </div>
+      <div class="card">
+        <label>Sensor ID</label>
+        <input id="sensor_id" placeholder="1">
+        <label>Street ID</label>
+        <input id="street_id" placeholder="2">
+        <label>Value</label>
+        <input id="value" placeholder="23.7">
+        <label>Recorded at (ISO o epoch ms - será tolerado)</label>
+        <input id="recorded_at" placeholder="2025-12-05T04:02:33.926Z or 1700000000000">
+        <div class="controls">
+          <button class="btn" id="btnSend">Enviar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div id="status"></div>
+      </div>
+    </div>
+    <script src="js/app.js"></script>
+    <script>
+      document.getElementById('btnSend').addEventListener('click', async ()=>{
+        const sensor = document.getElementById('sensor_id').value.trim();
+        const street = document.getElementById('street_id').value.trim();
+        const value = document.getElementById('value').value.trim();
+        const rec = document.getElementById('recorded_at').value.trim();
+        if(!sensor || !street || !value){ document.getElementById('status').innerHTML='<div class="error">Faltan campos</div>'; return; }
+        try{
+          const payload = { sensor_id: sensor, street_id: street, value: value, recorded_at: rec };
+          const res = await fetch('/SetData',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+          if(!res.ok) throw new Error(await res.text());
+          const text = await res.text();
+          document.getElementById('status').innerHTML = '<div class="ok">'+text+'</div>';
+        }catch(e){ document.getElementById('status').innerHTML = '<div class="error">'+e.message+'</div>'; }
+      });
+    </script>
+  </body>
+</html>

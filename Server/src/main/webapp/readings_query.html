@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Readings Query</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="card header">
+        <div class="logo">RQ</div>
+        <div>
+          <div class="title">Consulta flexible</div>
+          <div class="small muted">Usa /api/readings/query — start/end formato estricto yyyy-MM-ddHH:mm:ss</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="form-row">
+          <div style="flex:1">
+            <div class="label">start</div>
+            <input id="start" class="input" placeholder="2025-12-0504:00:00">
+          </div>
+          <div style="flex:1">
+            <div class="label">end</div>
+            <input id="end" class="input" placeholder="2025-12-0604:00:00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div style="flex:1">
+            <div class="label">filter (column)</div>
+            <input id="filter" class="input" placeholder="temp">
+          </div>
+          <div style="flex:1">
+            <div class="label">operator</div>
+            <select id="op" class="input"><option value="=">=</option><option value=">">&gt;</option><option value=">=">&gt;=</option><option value="<">&lt;</option><option value="<=">&lt;=</option><option value="!=">!=</option><option value="like">LIKE</option></select>
+          </div>
+          <div style="flex:1">
+            <div class="label">value</div>
+            <input id="value" class="input" placeholder="20">
+          </div>
+        </div>
+        <div class="form-row">
+          <div style="flex:1">
+            <div class="label">sortBy</div>
+            <input id="sortBy" class="input" placeholder="recorded_at">
+          </div>
+          <div style="width:140px">
+            <div class="label">order</div>
+            <select id="order" class="input"><option value="asc">asc</option><option value="desc">desc</option></select>
+          </div>
+          <div style="width:120px">
+            <div class="label">limit</div>
+            <input id="limit" class="input" type="number" value="100">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="controls">
+            <button class="btn" id="btnQuery">Consultar</button>
+            <button class="btn secondary" id="btnClear">Limpiar</button>
+          </div>
+        </div>
+        <div id="err" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <div id="results"></div>
+      </div>
+    </div>
+    <script src="js/app.js"></script>
+    <script>
+      document.getElementById('btnQuery').addEventListener('click', async ()=>{
+        const start = document.getElementById('start').value;
+        const end = document.getElementById('end').value;
+        const filter = document.getElementById('filter').value;
+        const op = document.getElementById('op').value;
+        const value = document.getElementById('value').value;
+        const sortBy = document.getElementById('sortBy').value;
+        const order = document.getElementById('order').value;
+        const limit = document.getElementById('limit').value||100;
+        const err = document.getElementById('err'); err.innerHTML='';
+        if(start && !validateStrictTs(start)){ err.innerHTML='<div class="error">Formato start inválido</div>'; return; }
+        if(end && !validateStrictTs(end)){ err.innerHTML='<div class="error">Formato end inválido</div>'; return; }
+        const q = new URLSearchParams(); if(start) q.set('start',start); if(end) q.set('end',end);
+        if(filter) q.set('filter',filter); if(op) q.set('op',op); if(value) q.set('value',value);
+        if(sortBy) q.set('sortBy',sortBy); if(order) q.set('order',order); q.set('limit',limit);
+        try{
+          const url = '/api/readings/query?' + q.toString();
+          const res = await fetch(url);
+          if(!res.ok){ throw new Error(await res.text()); }
+          const data = await res.json();
+          showJsonTable('results', data);
+        }catch(e){ err.innerHTML = '<div class="error">'+e.message+'</div>'; }
+      });
+      document.getElementById('btnClear').addEventListener('click', ()=>{ ['start','end','filter','value','sortBy'].forEach(id=>document.getElementById(id).value=''); document.getElementById('limit').value='100'; document.getElementById('results').innerHTML=''; });
+    </script>
+  </body>
+</html>

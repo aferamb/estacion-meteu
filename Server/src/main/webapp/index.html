@@ -1,92 +1,58 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
     <head>
         <meta charset="utf-8">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>  
-        <title>Server example</title>
-        <style>
-            table {
-                font-family: arial, sans-serif;
-                border-collapse: collapse;
-                width: 100%;
-            }
-
-            td, th {
-                border: 1px solid #dddddd;
-                text-align: left;
-                padding: 8px;
-            }
-
-            tr:nth-child(even) {
-                background-color: #dddddd;
-            }
-        </style>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Server UI - Index</title>
+        <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <script>
-            $(document).ready(function ()
-            {
-                loadData();
-            });
+        <div class="container">
+            <div class="header card">
+                <div class="logo">SU</div>
+                <div>
+                    <div class="title">Server control panel</div>
+                    <div class="small muted">Interactúa con los endpoints del servidor</div>
+                </div>
+            </div>
 
-            function loadData()
-            {
-                $.ajax(
-                {
-                    data: {},
-                    url: "/GetData",
-                    type: 'post',
-                    async: false,
-                    success: function (response)
-                    {
-                        var resp = JSON.parse(response);
-                        console.log(resp);
-                        $("#dataTable").empty();
-                        var newRow = "";
-                        $.each(resp, function (i, value)
-                        {
-                            newRow += "<tr>";
-                            newRow += "<td>" + value.date + "</td>";
-                            newRow += "<td>" + value.value + " &deg;C</td>";
-                            newRow += "</tr>";
-                        });
-                        $("#dataTable").append(newRow);
-                    }
-                });
-            }
+            <div class="card">
+                <div class="grid">
+                    <div class="card">
+                        <h3>Lecturas por sensor</h3>
+                        <p class="small">Interfaz para <code>/sensor/readings</code></p>
+                        <div class="controls"><a class="btn" href="sensor_readings.html">Abrir</a></div>
+                    </div>
+                    <div class="card">
+                        <h3>Consulta flexible</h3>
+                        <p class="small">Interfaz para <code>/api/readings/query</code></p>
+                        <div class="controls"><a class="btn" href="readings_query.html">Abrir</a></div>
+                    </div>
+                    <div class="card">
+                        <h3>GetData (últimos)</h3>
+                        <p class="small">Interfaz para <code>/GetData</code></p>
+                        <div class="controls"><a class="btn" href="getdata.html">Abrir</a></div>
+                    </div>
+                    <div class="card">
+                        <h3>GetDataByDate</h3>
+                        <p class="small">Interfaz para <code>/GetDataByDate</code></p>
+                        <div class="controls"><a class="btn" href="getdatabydate.html">Abrir</a></div>
+                    </div>
+                    <div class="card">
+                        <h3>Insertar dato</h3>
+                        <p class="small">Interfaz para <code>/SetData</code></p>
+                        <div class="controls"><a class="btn" href="setdata.html">Abrir</a></div>
+                    </div>
+                    <div class="card">
+                        <h3>Administración de usuarios</h3>
+                        <p class="small">Crear y listar usuarios (admin)</p>
+                        <div class="controls"><a class="btn" href="users.html">Usuarios</a> <a class="btn" href="create_user.html">Crear</a></div>
+                    </div>
+                </div>
+            </div>
 
-            function insertData()
-            {
-                var value = $('#newValue').val();
-                $.ajax(
-                {
-                    data: {value: value},
-                    url: "/SetData",
-                    type: 'post',
-                    async: false,
-                    success: function (response)
-                    {
-                        loadData();
-                    }
-                });
-            }
-
-        </script>
-        <h1>SERVER EXAMPLE</h1>
-        <br>
-        <label>New value</label>
-        <input type="number" id="newValue"><br>
-        <button onclick="insertData()">Send</button> 
-        <br><br>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Temperature</th>
-                </tr>
-            </thead>
-            <tbody id="dataTable">
-            </tbody>
-        </table>		
+            <div class="card small muted center">Theme: azul claro • blanco • gris — UI creada para interactuar con servlets</div>
+        </div>
+        <script src="js/app.js"></script>
     </body>
 </html>

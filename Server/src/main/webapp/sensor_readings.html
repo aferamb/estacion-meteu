@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Sensor Readings</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="card header">
+        <div class="logo">SR</div>
+        <div>
+          <div class="title">Sensor Readings</div>
+          <div class="small muted">Usa /sensor/readings - parámetros: sensor_id, street_id, start, end, limit</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="form-row">
+          <div style="flex:1">
+            <div class="label">sensor_id</div>
+            <input id="sensor_id" class="input" placeholder="ST_001">
+          </div>
+          <div style="flex:1">
+            <div class="label">street_id</div>
+            <input id="street_id" class="input" placeholder="STREET_A">
+          </div>
+          <div style="flex:1">
+            <div class="label">start (yyyy-MM-ddHH:mm:ss)</div>
+            <input id="start" class="input" placeholder="2025-12-0504:00:00">
+          </div>
+          <div style="flex:1">
+            <div class="label">end (yyyy-MM-ddHH:mm:ss)</div>
+            <input id="end" class="input" placeholder="2025-12-0604:00:00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div style="width:160px">
+            <div class="label">limit</div>
+            <input id="limit" class="input" value="100" type="number">
+          </div>
+          <div class="controls">
+            <button class="btn" id="btnQuery">Consultar</button>
+            <button class="btn secondary" id="btnClear">Limpiar</button>
+          </div>
+        </div>
+        <div id="err" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <div id="results"></div>
+      </div>
+    </div>
+    <script src="js/app.js"></script>
+    <script>
+      document.getElementById('btnQuery').addEventListener('click', async ()=>{
+        const sensor_id = document.getElementById('sensor_id').value;
+        const street_id = document.getElementById('street_id').value;
+        const start = document.getElementById('start').value;
+        const end = document.getElementById('end').value;
+        const limit = document.getElementById('limit').value || 100;
+        const err = document.getElementById('err'); err.innerHTML='';
+        if(start && !validateStrictTs(start)){ err.innerHTML='<div class="error">Formato start inválido</div>'; return; }
+        if(end && !validateStrictTs(end)){ err.innerHTML='<div class="error">Formato end inválido</div>'; return; }
+        const q = new URLSearchParams(); if(sensor_id) q.set('sensor_id',sensor_id); if(street_id) q.set('street_id',street_id);
+        if(start) q.set('start',start); if(end) q.set('end',end); q.set('limit',limit);
+        try{
+          const url = '/sensor/readings?' + q.toString();
+          const res = await fetch(url);
+          if(!res.ok){ throw new Error(await res.text()); }
+          const data = await res.json();
+          showJsonTable('results', data);
+        }catch(e){ err.innerHTML = '<div class="error">'+e.message+'</div>'; }
+      });
+      document.getElementById('btnClear').addEventListener('click', ()=>{ document.getElementById('sensor_id').value=''; document.getElementById('street_id').value=''; document.getElementById('start').value=''; document.getElementById('end').value=''; document.getElementById('limit').value='100'; document.getElementById('results').innerHTML=''; });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>GetData</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="card header">
+        <div class="logo">GD</div>
+        <div>
+          <div class="title">GetData</div>
+          <div class="small muted">Interfaz para <code>/GetData</code> — muestra las lecturas</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="controls">
+          <button class="btn" id="btnLoad">Cargar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div id="results"></div>
+      </div>
+    </div>
+    <script src="js/app.js"></script>
+    <script>
+      document.getElementById('btnLoad').addEventListener('click', async ()=>{
+        try{
+          const res = await fetch('/GetData');
+          if(!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          showJsonTable('results', data);
+        }catch(e){ document.getElementById('results').innerHTML = '<div class="error">'+e.message+'</div>'; }
+      });
+      // autoload
+      document.getElementById('btnLoad').click();
+    </script>
+  </body>
+</html>
