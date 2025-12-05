@@ -1,6 +1,8 @@
 package Servlets;
 
 import Database.UserDAO;
+import Logic.Log;
+
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -56,6 +58,5 @@ public class LoginServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login.html?error=1");
             return;
         }
-    }
     }
 }

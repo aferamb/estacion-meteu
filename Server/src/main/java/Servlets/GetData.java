@@ -37,8 +37,16 @@ public class GetData extends HttpServlet {
         PrintWriter out = response.getWriter();
         try 
         {
-            ArrayList<Measurement> values =Logic.getDataFromDB();
-            String jsonMeasurements = new Gson().toJson(values);
+            ArrayList<Measurement> values = Logic.getDataFromDB();
+            // convert Measurement objects to simple maps and format timestamps
+            java.util.List<java.util.Map<String,Object>> outList = new java.util.ArrayList<>();
+            for (Measurement m : values) {
+                java.util.Map<String,Object> map = new java.util.HashMap<>();
+                map.put("value", m.getValue());
+                map.put("date", Database.SensorReadingDAO.formatTimestamp(m.getDate()));
+                outList.add(map);
+            }
+            String jsonMeasurements = new Gson().toJson(outList);
             Log.log.info("Values=>" + jsonMeasurements);
             out.println(jsonMeasurements);
         } catch (NumberFormatException nfe) 

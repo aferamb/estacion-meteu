@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   INDEX idx_data_topic (data_topic)
 );
 
+INSERT INTO subscriptions (topic, data_topic, alert_topic) VALUES ('sensors/ST_0686/LABJAV08-G1', 'sensors/ST_0686/LABJAV08-G1', 'sensors/ST_0686/LABJAV08-G1/alerts');
+
 -- Table that stores configurable allowed ranges for data parameters
 CREATE TABLE IF NOT EXISTS parameter_ranges (
   parameter VARCHAR(64) PRIMARY KEY,

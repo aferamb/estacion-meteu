@@ -32,7 +32,14 @@ public class GetDataByDate extends HttpServlet {
                 return;
             }
             ArrayList<Measurement> values = Logic.getDataFromDate(dateParam);
-            String jsonMeasurements = new Gson().toJson(values);
+            java.util.List<java.util.Map<String,Object>> outList = new java.util.ArrayList<>();
+            for (Measurement m : values) {
+                java.util.Map<String,Object> map = new java.util.HashMap<>();
+                map.put("value", m.getValue());
+                map.put("date", Database.SensorReadingDAO.formatTimestamp(m.getDate()));
+                outList.add(map);
+            }
+            String jsonMeasurements = new Gson().toJson(outList);
             Log.log.info("Values for date=" + dateParam + " =>" + jsonMeasurements);
             out.println(jsonMeasurements);
         } catch (Exception e) {

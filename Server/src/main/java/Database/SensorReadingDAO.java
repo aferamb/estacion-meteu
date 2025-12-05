@@ -7,13 +7,54 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 public class SensorReadingDAO {
 
     private static final Gson gson = new Gson();
+    // whitelist of allowed columns for filtering/sorting to avoid SQL injection
+    public static final Set<String> ALLOWED_COLUMNS = new HashSet<String>() {{
+        add("id");
+        add("sensor_id");
+        add("sensor_type");
+        add("street_id");
+        add("recorded_at");
+        add("latitude");
+        add("longitude");
+        add("altitude");
+        add("district");
+        add("neighborhood");
+        add("temp");
+        add("humid");
+        add("aqi");
+        add("lux");
+        add("sound_db");
+        add("atmhpa");
+        add("uv_index");
+        add("bsec_status");
+        add("iaq");
+        add("static_iaq");
+        add("co2_eq");
+        add("breath_voc_eq");
+        add("raw_temperature");
+        add("raw_humidity");
+        add("pressure_hpa");
+        add("gas_resistance_ohm");
+        add("gas_percentage");
+        add("stabilization_status");
+        add("run_in_status");
+        add("sensor_heat_comp_temp");
+        add("sensor_heat_comp_hum");
+    }};
 
     /**
      * Insert sensor reading parsed from topic payload JSON.
@@ -38,8 +79,8 @@ public class SensorReadingDAO {
             String streetId = getString(map, "street_id");
 
             // timestamp may be under "timestamp" or "recorded_at"
-            Timestamp recordedAt = getTimestamp(map, "recorded_at");
-            if (recordedAt == null) recordedAt = getTimestamp(map, "timestamp");
+            Timestamp recordedAt = getTimestamp(map, "timestamp");
+            if (recordedAt == null) recordedAt = getTimestamp(map, "recorded_at");
 
             // location is nested
             Map<String, Object> location = getMap(map, "location");
@@ -175,17 +216,177 @@ public class SensorReadingDAO {
             // Trim fractional seconds to avoid parsing issues when present
             int dot = s.indexOf('.');
             if (dot > 0) {
-                // keep up to microseconds compatible with Timestamp.valueOf (needs up to nanos)
+                // keep up to nanoseconds (Timestamp accepts up to 9 digits)
                 String before = s.substring(0, dot);
                 String after = s.substring(dot+1);
-                // remove timezone remnants if any
-                if (after.contains(" ")) after = after.substring(0, after.indexOf(' '));
-                s = before + " " + after;
-                // attempt to keep only first 6-9 digits is not necessary for now
+                // strip any non-digit characters from fractional part (timezone remnants)
+                after = after.replaceAll("[^0-9]", "");
+                if (after.length() > 9) after = after.substring(0, 9);
+                if (after.length() > 0) s = before + "." + after; else s = before;
             }
             return Timestamp.valueOf(s);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Parse a timestamp string accepted by the project: ISO-8601 (with or without Z)
+     * or epoch milliseconds as a number string. Returns null on parse failure.
+     */
+    public static Timestamp parseTimestampString(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        try {
+            // try epoch millis
+            if (s.matches("^\\d+$")) {
+                long ms = Long.parseLong(s);
+                return new Timestamp(ms);
+            }
+        } catch (Exception ignored) {}
+        try {
+            // fallback to previous tolerant parser
+            s = s.replace('T', ' ');
+            if (s.endsWith("Z")) s = s.substring(0, s.length()-1);
+            int dot = s.indexOf('.');
+            if (dot > 0) {
+                String before = s.substring(0, dot);
+                String after = s.substring(dot+1);
+                after = after.replaceAll("[^0-9]", "");
+                if (after.length() > 9) after = after.substring(0, 9);
+                if (after.length() > 0) s = before + "." + after; else s = before;
+            }
+            return Timestamp.valueOf(s);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Format a Timestamp to the project's strict string format: yyyy-MM-ddHH:mm:ss
+     */
+    public static String formatTimestamp(Timestamp ts) {
+        if (ts == null) return null;
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-ddHH:mm:ss");
+        return fmt.format(ts);
+    }
+
+    /**
+     * Parse a servlet parameter timestamp in the strict expected format: yyyy-MM-ddHH:mm:ss
+     * Example: 2025-12-0504:02:33
+     * Throws IllegalArgumentException if format does not match.
+     */
+    public static Timestamp parseParamTimestampStrict(String s) {
+        if (s == null) return null;
+        String trimmed = s.trim();
+        // expected: 4-2-2 then 2:2:2 => total length 19 (10 date + 8 time) -> 18? actually 'yyyy-MM-ddHH:mm:ss' length=19
+        if (!trimmed.matches("^\\d{4}-\\d{2}-\\d{2}\\d{2}:\\d{2}:\\d{2}$")) {
+            throw new IllegalArgumentException("Formato de timestamp inválido. Se espera: yyyy-MM-ddHH:mm:ss (ej. 2025-12-0504:02:33)");
+        }
+        String datePart = trimmed.substring(0, 10);
+        String timePart = trimmed.substring(10);
+        String normalized = datePart + " " + timePart;
+        try {
+            return Timestamp.valueOf(normalized);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Formato de timestamp inválido. Se espera: yyyy-MM-ddHH:mm:ss (ej. 2025-12-0504:02:33)");
+        }
+    }
+
+    /**
+     * Flexible query that supports time range, a single column filter with operator,
+     * ordering and pagination. Uses ALLOWED_COLUMNS whitelist for column names.
+     */
+    public static List<Map<String, Object>> queryReadings(QueryParams params) {
+        ConectionDDBB conector = new ConectionDDBB();
+        Connection con = null;
+        List<Map<String, Object>> rows = new ArrayList<>();
+        try {
+            con = conector.obtainConnection(true);
+            StringBuilder sql = new StringBuilder("SELECT * FROM sensor_readings WHERE 1=1");
+            List<Object> arguments = new ArrayList<>();
+
+            if (params.getStart() != null) {
+                sql.append(" AND recorded_at >= ?");
+                arguments.add(params.getStart());
+            }
+            if (params.getEnd() != null) {
+                sql.append(" AND recorded_at <= ?");
+                arguments.add(params.getEnd());
+            }
+            if (params.getFilter() != null && !params.getFilter().isEmpty() && params.getValue() != null) {
+                String col = params.getFilter();
+                if (!ALLOWED_COLUMNS.contains(col)) throw new IllegalArgumentException("Invalid filter column");
+                String op = params.getOperator();
+                if (op == null) op = "=";
+                // only allow a small set of operators
+                switch (op) {
+                    case "=":
+                    case "!=":
+                    case ">":
+                    case ">=":
+                    case "<":
+                    case "<=":
+                        sql.append(" AND ").append(col).append(" ").append(op).append(" ?");
+                        arguments.add(params.getValue());
+                        break;
+                    case "like":
+                    case "LIKE":
+                        sql.append(" AND ").append(col).append(" LIKE ?");
+                        String v = params.getValue();
+                        if (!v.contains("%")) v = "%" + v + "%";
+                        arguments.add(v);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported operator");
+                }
+            }
+
+            if (params.getSortBy() != null && !params.getSortBy().isEmpty()) {
+                String sort = params.getSortBy();
+                if (!ALLOWED_COLUMNS.contains(sort)) throw new IllegalArgumentException("Invalid sort column");
+                String ord = "ASC".equalsIgnoreCase(params.getOrder()) ? "ASC" : "DESC".equalsIgnoreCase(params.getOrder()) ? "DESC" : "ASC";
+                sql.append(" ORDER BY ").append(sort).append(" ").append(ord);
+            } else {
+                sql.append(" ORDER BY recorded_at DESC");
+            }
+
+            // limit/offset
+            int limit = params.getLimit() > 0 ? params.getLimit() : 200;
+            if (limit > 200) limit = 200;
+            int offset = params.getOffset() >= 0 ? params.getOffset() : 0;
+            sql.append(" LIMIT ? OFFSET ?");
+
+            PreparedStatement ps = con.prepareStatement(sql.toString());
+            int idx = 1;
+            for (Object a : arguments) {
+                if (a instanceof Timestamp) ps.setTimestamp(idx++, (Timestamp) a);
+                else ps.setObject(idx++, a);
+            }
+            ps.setInt(idx++, limit);
+            ps.setInt(idx++, offset);
+
+            ResultSet rs = ps.executeQuery();
+            ResultSetMetaData md = rs.getMetaData();
+            int cols = md.getColumnCount();
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                for (int c = 1; c <= cols; c++) {
+                    Object v = rs.getObject(c);
+                    String colName = md.getColumnName(c);
+                    if (v != null && colName != null && colName.equalsIgnoreCase("recorded_at") && v instanceof java.sql.Timestamp) {
+                        row.put(colName, formatTimestamp((java.sql.Timestamp) v));
+                    } else {
+                        row.put(colName, v);
+                    }
+                }
+                rows.add(row);
+            }
+        } catch (Exception e) {
+            Log.log.error("Error querying sensor_readings: {}", e);
+        } finally {
+            conector.closeConnection(con);
+        }
+        return rows;
     }
 }

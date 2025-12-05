@@ -44,8 +44,27 @@ public class SensorReadingsServlet extends HttpServlet {
             List<Object> params = new ArrayList<>();
             if (sensorId != null && !sensorId.isEmpty()) { sql.append(" AND sensor_id = ?"); params.add(sensorId); }
             if (streetId != null && !streetId.isEmpty()) { sql.append(" AND street_id = ?"); params.add(streetId); }
-            if (start != null && !start.isEmpty()) { sql.append(" AND recorded_at >= ?"); params.add(java.sql.Timestamp.valueOf(start.replace('T',' ').replace('Z',' '))); }
-            if (end != null && !end.isEmpty()) { sql.append(" AND recorded_at <= ?"); params.add(java.sql.Timestamp.valueOf(end.replace('T',' ').replace('Z',' '))); }
+            if (start != null && !start.isEmpty()) {
+                // require strict param format yyyy-MM-ddHH:mm:ss (e.g. 2025-12-0504:02:33)
+                try {
+                    java.sql.Timestamp ts = Database.SensorReadingDAO.parseParamTimestampStrict(start);
+                    sql.append(" AND recorded_at >= ?"); params.add(ts);
+                } catch (IllegalArgumentException iae) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    out.println("{\"error\":\"Formato de fecha inválido. Use yyyy-MM-ddHH:mm:ss\"}");
+                    return;
+                }
+            }
+            if (end != null && !end.isEmpty()) {
+                try {
+                    java.sql.Timestamp ts = Database.SensorReadingDAO.parseParamTimestampStrict(end);
+                    sql.append(" AND recorded_at <= ?"); params.add(ts);
+                } catch (IllegalArgumentException iae) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    out.println("{\"error\":\"Formato de fecha inválido. Use yyyy-MM-ddHH:mm:ss\"}");
+                    return;
+                }
+            }
             sql.append(" ORDER BY recorded_at DESC LIMIT ").append(limit);
 
             PreparedStatement ps = con.prepareStatement(sql.toString());
@@ -59,7 +78,12 @@ public class SensorReadingsServlet extends HttpServlet {
                 Map<String, Object> row = new HashMap<>();
                 for (int c = 1; c <= cols; c++) {
                     Object v = rs.getObject(c);
-                    row.put(md.getColumnName(c), v);
+                    String col = md.getColumnName(c);
+                    if (v != null && col != null && col.equalsIgnoreCase("recorded_at") && v instanceof java.sql.Timestamp) {
+                        row.put(col, Database.SensorReadingDAO.formatTimestamp((java.sql.Timestamp) v));
+                    } else {
+                        row.put(col, v);
+                    }
                 }
                 rows.add(row);
             }

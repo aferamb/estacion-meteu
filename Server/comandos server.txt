@@ -1,0 +1,57 @@
+COMANDOS CMD
+
+Ejemplos de uso (CMD / curl) para publis
+- Publicar usando `alert` y topic directo:
+	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" -d "alert=WTH001"
+	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" --data-urlencode "message={"alerta":"WTH001","info":"Prueba"}"
+- Publicar usando message (JSON completo) y topic directo:
+	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "topic=sensors/ST_0686/LABJAV08-G1/alerts/1" --data-urlencode "message="WTH002""
+- Publicar usando subscription (stored topic) — server resolverá/persistirá alert_topic:
+	curl -i -b cookies.txt "http://localhost:8080/admin/publishAlert" -d "subscription=sensors/ST_0686/LABJAV08-G1" -d "alert=WTH002"
+- Obtener todas las activas:
+    - curl (ROOT context)curl 'http://<host>/admin/alarms?active=1'
+- Obtener últimas 50 alarmas para un sensor:
+    - curl 'http://localhost:8080/admin/alarms?sensor_id=ST_0686&limit=50'
+
+Consulta de daton en la DB de sensores
+	curl "http://localhost:8080/sensor/readings?sensor_id=LABJAV08-G1&limit=10”
+
+- Ejemplos correctos (Windows CMD). para suscribirse a topics y cosas
+    - Subscribe:
+curl -i -b cookies.txt -X POST "http://localhost:8080/admin/subscribe" -d "topic=sensors/ST_0686/LABJAV08-G1"
+    - Unsubscribe:
+curl -i -b cookies.txt -X POST "http://localhost:8080/admin/unsubscribe" -d "topic=sensors/ST_0686/LABJAV08-G1"
+    - List subscriptions:
+curl -i -b cookies.txt "http://localhost:8080/admin/subscriptions"
+
+
+Listar usuarioscurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/logincurl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/login
+curl -i -b cookies.txt http://localhost:8080/admin/users
+
+INICIO SESION
+curl -i -c cookies.txt -X POST -d "username=admin&password=adminpass" http://localhost:8080/login
+
+curl -i -c cookiesuser.txt -X POST -d "username=testuser1&password=testpass" http://localhost:8080/login
+
+{"sensor_id": "LABJAV08-G1","sensor_type": "weather","street_id": "ST_0686","timestamp": "2025-12-05T04:02:33.926Z","location": {"lat": 40.397154,"long": -3.673425,"alt": 650.0,"district": "Arganzuela","neighborhood": "Imperial"},"data": {"temp": 24.84,"humid": 48.20,"aqi": 50,"lux": 360.83,"sound_db": 64.89,"atmhpa": 933.96,"uv_index": 0}}
+
+http://localhost:8080/api/readings/query?start=2025-12-0500:00:00&end=2025-12-0500:00:00
+IMPORY¿TANTE QUE LAS FECHAS ESTEN 2025-12-0500:00:00 y no 2025-12-05T00:00:00Z
+
+
+
+# rango temporal
+
+curl "[http://localhost:8080/api/readings/query?start=2025-12-01T00:00:00Z&end=2025-12-02T00:00:00Z](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?start=2025-12-01T00:00:00Z&end=2025-12-02T00:00:00Z)"
+
+# filtrar por sensor_id exacto
+
+curl "[http://localhost:8080/api/readings/query?filter=sensor_id&value=12&op==](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?filter=sensor_id&value=12&op==)"
+
+# rango + filtro + ordenar por recorded_at desc
+
+curl "[http://localhost:8080/api/readings/query?start=1700000000000&end=1700100000000&filter=temp&value=20&op=>=&sortBy=recorded_at&order=desc](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?start=1700000000000&end=1700100000000&filter=temp&value=20&op=%3E=&sortBy=recorded_at&order=desc)"
+
+# búsqueda por texto usando LIKE (devuelve coincidencias parciales)
+
+curl "[http://localhost:8080/api/readings/query?filter=district&value=center&op=like&limit=50](http://localhost:8080/ServerExampleUbicomp-1.0-SNAPSHOT/api/readings/query?filter=district&value=center&op=like&limit=50)"
