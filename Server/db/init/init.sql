@@ -21,12 +21,12 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
   sensor_type VARCHAR(64) NOT NULL,
   street_id VARCHAR(64) NOT NULL,
     -- No automatic timestamps: recorded_at is provided by the sensor
-  recorded_at TIMESTAMP NOT NULL,
-  latitude DOUBLE NOT NULL,
-  longitude DOUBLE NOT NULL,
-  altitude DOUBLE NOT NULL,
-  district VARCHAR(128) NOT NULL,
-  neighborhood VARCHAR(128) NOT NULL,
+  recorded_at TIMESTAMP NULL,
+  latitude DOUBLE NULL,
+  longitude DOUBLE NULL,
+  altitude DOUBLE NULL,
+  district VARCHAR(128) NULL,
+  neighborhood VARCHAR(128) NULL,
 
   -- Common sensor measurements (nullable)
   temp DOUBLE NULL,
@@ -70,5 +70,16 @@ CREATE TABLE IF NOT EXISTS users (
   last_login TIMESTAMP NULL,
   failed_attempts INT DEFAULT 0,
   disabled TINYINT(1) DEFAULT 0
+);
+
+-- Table to store server subscriptions to station topics
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  topic VARCHAR(255) NOT NULL UNIQUE,
+  data_topic VARCHAR(255) NOT NULL,
+  alert_topic VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  active TINYINT(1) DEFAULT 1,
+  INDEX idx_data_topic (data_topic)
 );
 

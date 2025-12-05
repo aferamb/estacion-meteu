@@ -2,6 +2,8 @@
 #include <PubSubClient.h>
 #include <TFT_eSPI.h>
 #include <time.h>
+// JSON parsing for alerts
+#include <ArduinoJson.h>
 // BME680 / BSEC (usar I2C)
 #include "bsec.h"
 #include <Wire.h>
@@ -383,32 +385,46 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   String msg;
   for (unsigned int i = 0; i < length; i++) msg += (char)payload[i];
   Serial.print("MQTT msg ["); Serial.print(topic); Serial.print("]: "); Serial.println(msg);
-
-  // Si es una alerta, guardamos y la mostramos en rojo
-  // Podemos establecer convención: topic contiene "alerts" o bien topic == sensors/alerts/<id>
+  // If this topic is an alert topic we handle JSON payloads like {"alerta":"WTH001"}
+  // Convention: the station alert subscription is topic_alerts (e.g. "sensors/..../alerts/#")
   String topicStr = String(topic_alerts);
   topicStr.remove(topicStr.length() - 2); // remove "/#"
   if (String(topic).startsWith(topicStr)) {
+    // Try to parse payload as JSON and extract field "alerta"; if parsing fails, fall back to raw string
+    String alertVal = msg;
+    StaticJsonDocument<512> doc;
+    DeserializationError err = deserializeJson(doc, msg);
+    if (!err) {
+      if (doc.containsKey("alerta")) {
+        alertVal = String((const char*) doc["alerta"]);
+      } else if (doc.containsKey("message")) {
+        alertVal = String((const char*) doc["message"]);
+      }
+    } else {
+      // If it's not valid JSON, use the raw string (keeps backwards compatibility)
+      alertVal = msg;
+    }
+
     // store alert and display a full-screen red banner with centered text
-    lastAlert = msg;
-    lastFullAlertMessage = msg;
+    lastAlert = alertVal;
+    lastFullAlertMessage = alertVal;
     alertTime = millis();
     alertActive = true;
     alertStart = millis();
 
     // Special command messages
-    if (msg == "WTH001") {
+    if (alertVal == "WTH001") {
       // Enter error mode
       errorMode = true;
       Serial.println("WTH001 received: entering ERROR mode");
-    } else if (msg == "WTH002") {
+    } else if (alertVal == "WTH002") {
       // Exit error mode
       errorMode = false;
       Serial.println("WTH002 received: returning to NORMAL mode");
     }
 
     // prepare short message that fits on screen
-    String displayMsg = msg;
+    String displayMsg = alertVal;
     if (displayMsg.length() > 48) displayMsg = displayMsg.substring(0, 45) + "...";
 
     // draw full-screen red background and centered white text (wrap into up to 2 lines)
@@ -645,7 +661,7 @@ void publishAndShowSensorData(const char* sensor_id, const char* sensor_type, co
   if (errorMode) {
     json += ",\"extra\":{";
     // Include BSEC status code (first key must not have a leading comma)
-    json += "\"bsec_status\": "; json += String(iaqSensor.bsecStatus);
+    json += "\"bsec_status\": "; json += String(iaqSensor.bsecStatus); json += ",";
     // BSEC high-level outputs
     json += "\"iaq\": "; json += String(iaqSensor.iaq, 2); json += ",";
     json += "\"static_iaq\": "; json += String(iaqSensor.staticIaq, 2); json += ",";
