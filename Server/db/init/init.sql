@@ -66,5 +66,9 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(512) NOT NULL,
   salt VARCHAR(128) NULL, 
   role VARCHAR(64) DEFAULT 'user',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_login TIMESTAMP NULL,
+  failed_attempts INT DEFAULT 0,
+  disabled TINYINT(1) DEFAULT 0
 );
+

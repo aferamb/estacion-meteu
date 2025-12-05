@@ -20,7 +20,7 @@ const char* mqtt_pass = "";
 // topic donde publicaremos los JSON (puedes cambiarlo)
 const char* topic_pub = "sensors/ST_0686/LABJAV08-G1";
 // topic para recibir avisos (alerts) desde el servidor
-const char* topic_alerts = "sensors/ST_0686/alerts/#";
+const char* topic_alerts = "sensors/ST_0686/LABJAV08-G1/alerts/#";
 
 // Identificador del sensor (se incluye dentro del JSON)
 const char* SENSOR_ID = "LABJAV08-G1";
