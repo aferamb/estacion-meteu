@@ -8,7 +8,8 @@ public class MeteuApp extends Application {
     public void onCreate() {
         super.onCreate();
         // initialize RetrofitClient with application context so interceptors can broadcast
-        RetrofitClient.init(getApplicationContext());
+        appContext = getApplicationContext();
+        RetrofitClient.init(appContext);
     }
 
     // helper to access app context from static places if needed

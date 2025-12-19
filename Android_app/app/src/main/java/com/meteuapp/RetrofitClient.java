@@ -27,11 +27,14 @@ public class RetrofitClient {
     // MQTT broker URL (tcp). Update if your broker runs on another host/port.
     public static final String MQTT_BROKER_URL = "tcp://192.168.2.156:1883";
 
-    // keep a reference to the cookie jar so we can clear cookies on logout
-    private static final com.meteuapp.network.InMemoryCookieJar cookieJar = new com.meteuapp.network.InMemoryCookieJar();
+    // cookie jar reference (initialized in init with application context)
+    private static com.meteuapp.network.InMemoryCookieJar cookieJar = null;
 
     public static Retrofit getRetrofitInstance() {
         if (retrofit == null) {
+            if (cookieJar == null && appContext != null) {
+                cookieJar = new com.meteuapp.network.InMemoryCookieJar(appContext);
+            }
             // OkHttp client with a simple in-memory CookieJar to preserve session cookies
                 // add logging to inspect raw HTTP responses when debugging
                 HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
@@ -61,6 +64,8 @@ public class RetrofitClient {
          */
         public static void init(android.content.Context ctx) {
             appContext = ctx.getApplicationContext();
+            // initialize persistent cookie jar using application context
+            cookieJar = new com.meteuapp.network.InMemoryCookieJar(appContext);
             // rebuild retrofit so that interceptors with context are active
             retrofit = null;
             retrofit = getRetrofitInstanceWithAuthInterceptor();
@@ -82,9 +87,24 @@ public class RetrofitClient {
                 return resp;
             };
 
+            // add Authorization header if JWT present
+            okhttp3.Interceptor authHeader = chain -> {
+                okhttp3.Request req = chain.request();
+                SessionManager sm = new SessionManager(appContext);
+                String token = sm.getJwtToken();
+                if (token != null && !token.isEmpty()) {
+                    okhttp3.Request newReq = req.newBuilder()
+                            .header("Authorization", "Bearer " + token)
+                            .build();
+                    return chain.proceed(newReq);
+                }
+                return chain.proceed(req);
+            };
+
             OkHttpClient client = new OkHttpClient.Builder()
                     .cookieJar(cookieJar)
                     .addInterceptor(logging)
+                    .addInterceptor(authHeader)
                     .addInterceptor(authWatcher)
                     .connectTimeout(15, TimeUnit.SECONDS)
                     .readTimeout(30, TimeUnit.SECONDS)
@@ -105,6 +125,6 @@ public class RetrofitClient {
      * Clear cookies stored in the in-memory CookieJar (used on logout).
      */
     public static void clearCookies() {
-        cookieJar.clear();
+        if (cookieJar != null) cookieJar.clear();
     }
 }

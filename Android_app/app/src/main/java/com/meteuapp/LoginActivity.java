@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.meteuapp.models.TokenResponse;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -55,20 +57,50 @@ public class LoginActivity extends AppCompatActivity {
 
         progress.setVisibility(View.VISIBLE);
 
+        // attempt JWT login first, then fall back to cookie-based login on failure
+        attemptJwtLogin(user, pass);
+    }
+
+    private void attemptJwtLogin(String user, String pass) {
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
-        Call<Void> call = api.login(user, pass);
-        call.enqueue(new Callback<Void>() {
+        Call<TokenResponse> jwtCall = api.loginJwt(user, pass);
+        jwtCall.enqueue(new Callback<TokenResponse>() {
+            @Override
+            public void onResponse(Call<TokenResponse> call, Response<TokenResponse> response) {
+                progress.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null && response.body().getToken() != null) {
+                    String token = response.body().getToken();
+                    session.setLoggedIn(user, true);
+                    session.setJwtToken(token);
+                    Toast.makeText(LoginActivity.this, "Login correcto (JWT)", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
+                    finish();
+                } else {
+                    attemptLegacyLogin(user, pass);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TokenResponse> call, Throwable t) {
+                // network error trying JWT; fall back to legacy login
+                attemptLegacyLogin(user, pass);
+            }
+        });
+    }
+
+    private void attemptLegacyLogin(String user, String pass) {
+        ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
+        Call<Void> legacyCall = api.login(user, pass);
+        legacyCall.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 progress.setVisibility(View.GONE);
                 if (response.isSuccessful()) {
-                    // Login success: server uses session cookie - CookieJar stores it
                     session.setLoggedIn(user, true);
                     Toast.makeText(LoginActivity.this, "Login correcto", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
                     finish();
                 } else {
-                    // Some servers redirect on success; if not successful treat as auth failure
                     Toast.makeText(LoginActivity.this, "Error de autenticación", Toast.LENGTH_LONG).show();
                 }
             }

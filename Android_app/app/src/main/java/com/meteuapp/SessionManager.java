@@ -11,6 +11,7 @@ public class SessionManager {
     private static final String PREFS = "meteu_prefs";
     private static final String KEY_LOGGED = "logged_in";
     private static final String KEY_USER = "username";
+    private static final String KEY_JWT = "jwt_token";
 
     private final SharedPreferences prefs;
 
@@ -31,4 +32,10 @@ public class SessionManager {
     public void clear() {
         prefs.edit().clear().apply();
     }
+
+    public void setJwtToken(String token) {
+        prefs.edit().putString(KEY_JWT, token).apply();
+    }
+
+    public String getJwtToken() { return prefs.getString(KEY_JWT, null); }
 }

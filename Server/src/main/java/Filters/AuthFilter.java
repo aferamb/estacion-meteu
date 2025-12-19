@@ -21,6 +21,19 @@ public class AuthFilter implements Filter {
             return;
         }
         HttpSession s = r.getSession(false);
+        // check Authorization: Bearer <token> first
+        String auth = r.getHeader("Authorization");
+        if (auth != null && auth.toLowerCase().startsWith("bearer ")) {
+            String token = auth.substring(7).trim();
+            String subject = Utils.JwtUtil.validateTokenAndGetSubject(token);
+            if (subject != null) {
+                // create a session for compatibility with existing servlets
+                HttpSession newS = r.getSession(true);
+                newS.setAttribute("user", subject);
+                s = newS;
+            }
+        }
+
         if (s != null && s.getAttribute("user") != null) {
             // if accessing /admin/* enforce admin role
             String user = (String) s.getAttribute("user");

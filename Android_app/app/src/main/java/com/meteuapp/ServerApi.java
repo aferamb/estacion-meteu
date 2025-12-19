@@ -3,6 +3,7 @@ package com.meteuapp;
 import com.meteuapp.models.Alarm;
 import com.meteuapp.models.LiveResponse;
 import com.meteuapp.models.SensorReading;
+import com.meteuapp.models.TokenResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,10 @@ public interface ServerApi {
     @FormUrlEncoded
     @POST("login")
     Call<Void> login(@Field("username") String username, @Field("password") String password);
+
+    @FormUrlEncoded
+    @POST("api/login")
+    Call<TokenResponse> loginJwt(@Field("username") String username, @Field("password") String password);
 
     @GET("admin/live")
     Call<LiveResponse> getLive();
