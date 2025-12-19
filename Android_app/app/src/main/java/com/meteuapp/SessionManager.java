@@ -12,6 +12,7 @@ public class SessionManager {
     private static final String KEY_LOGGED = "logged_in";
     private static final String KEY_USER = "username";
     private static final String KEY_JWT = "jwt_token";
+    private static final String KEY_ROLE = "user_role";
 
     private final SharedPreferences prefs;
 
@@ -38,4 +39,7 @@ public class SessionManager {
     }
 
     public String getJwtToken() { return prefs.getString(KEY_JWT, null); }
+
+    public void setRole(String role) { prefs.edit().putString(KEY_ROLE, role).apply(); }
+    public String getRole() { return prefs.getString(KEY_ROLE, null); }
 }

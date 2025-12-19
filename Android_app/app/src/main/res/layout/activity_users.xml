@@ -6,18 +6,18 @@
     android:padding="16dp">
 
     <Button
-        android:id="@+id/btn_add_subscription"
+        android:id="@+id/btn_add_user"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Añadir suscripción"
-        android:layout_marginBottom="8dp" />
+        android:text="Crear usuario" />
 
     <ProgressBar
         android:id="@+id/progress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
         android:visibility="gone"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp" />
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -27,17 +27,17 @@
         android:layout_weight="1">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_subscriptions"
+            android:id="@+id/rv_users"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <Button
-        android:id="@+id/btn_unsubscribe"
+        android:id="@+id/btn_delete_user"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Desuscribir selección"
+        android:text="Eliminar selección"
         android:enabled="false"
         android:layout_marginTop="8dp" />
 

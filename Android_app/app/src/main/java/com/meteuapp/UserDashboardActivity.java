@@ -20,11 +20,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * DashboardActivity shows the live data (messages and stations) calling /admin/live.
- * It requires the user to be logged in (session cookie preserved by CookieJar).
- */
-public class DashboardActivity extends AppBaseActivity {
+public class UserDashboardActivity extends AppBaseActivity {
 
     private SessionManager session;
     private TextView tvWelcome;
@@ -40,7 +36,6 @@ public class DashboardActivity extends AppBaseActivity {
 
         session = new SessionManager(this);
         if (!session.isLoggedIn()) {
-            // Not logged in -> go to login
             startActivity(new Intent(this, LoginActivity.class));
             finish();
             return;
@@ -60,48 +55,32 @@ public class DashboardActivity extends AppBaseActivity {
         rvStations.setAdapter(stationAdapter);
         if (swipe != null) swipe.setOnRefreshListener(this::loadLive);
 
-        // show cached subscriptions count in welcome
-        updateSubscriptionsCount();
-
+        // limited UI: hide admin-only buttons
         Button btnLogout = findViewById(R.id.btn_logout);
+        Button btnReadings = findViewById(R.id.btn_readings);
+        Button btnAlarms = findViewById(R.id.btn_alarms);
+        Button btnSubscriptions = findViewById(R.id.btn_subscriptions);
+        Button btnPublish = findViewById(R.id.btn_publish);
         Button btnUsers = findViewById(R.id.btn_users);
+
+        // show only allowed buttons
+        btnReadings.setOnClickListener(v -> startActivity(new Intent(this, ReadingsActivity.class)));
+        btnAlarms.setOnClickListener(v -> startActivity(new Intent(this, AlarmsActivity.class)));
         btnLogout.setOnClickListener(v -> doLogout());
 
-        findViewById(R.id.btn_readings).setOnClickListener(v -> startActivity(new android.content.Intent(this, ReadingsActivity.class)));
-        findViewById(R.id.btn_subscriptions).setOnClickListener(v -> startActivity(new android.content.Intent(this, SubscriptionsActivity.class)));
-        findViewById(R.id.btn_alarms).setOnClickListener(v -> startActivity(new android.content.Intent(this, AlarmsActivity.class)));
-        findViewById(R.id.btn_publish).setOnClickListener(v -> startActivity(new android.content.Intent(this, PublishAlertActivity.class)));
-        findViewById(R.id.btn_users).setOnClickListener(v -> startActivity(new android.content.Intent(this, UsersActivity.class)));
+        // hide admin-only
+        if (btnSubscriptions != null) btnSubscriptions.setVisibility(android.view.View.GONE);
+        if (btnPublish != null) btnPublish.setVisibility(android.view.View.GONE);
+        if (btnUsers != null) btnUsers.setVisibility(android.view.View.GONE);
 
         // Load on start
         loadLive();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // refresh subscriptions count when returning
-        updateSubscriptionsCount();
-    }
-
-    private void updateSubscriptionsCount() {
-        try {
-            String json = getSharedPreferences("meteu_prefs", MODE_PRIVATE).getString("cached_subscriptions", null);
-            int cnt = 0;
-            if (json != null) {
-                com.google.gson.Gson g = new com.google.gson.Gson();
-                java.util.List<String> list = g.fromJson(json, new com.google.gson.reflect.TypeToken<java.util.List<String>>(){}.getType());
-                if (list != null) cnt = list.size();
-            }
-            // Show only username in the welcome header (remove subscriptions count)
-            tvWelcome.setText("Dashboard — " + session.getUsername());
-        } catch (Exception ignored) {}
-    }
-
     private void loadLive() {
         if (swipe != null) swipe.setRefreshing(true);
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
-        Call<LiveResponse> call = api.getLive();
+        Call<LiveResponse> call = api.getLiveApi();
         call.enqueue(new Callback<LiveResponse>() {
             @Override
             public void onResponse(Call<LiveResponse> call, Response<LiveResponse> response) {
@@ -122,7 +101,7 @@ public class DashboardActivity extends AppBaseActivity {
                         }
                     } catch (Exception ignore) {}
                     if (swipe != null) swipe.setRefreshing(false);
-                    Toast.makeText(DashboardActivity.this, "Error cargando datos live", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UserDashboardActivity.this, "Error cargando datos live", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (swipe != null) swipe.setRefreshing(false);
@@ -139,7 +118,7 @@ public class DashboardActivity extends AppBaseActivity {
                 String msg = t.getMessage() == null ? "" : t.getMessage();
                 // Do NOT assume JSON parse errors mean session expired; allow authWatcher/401 handling to manage expiries.
                 if (swipe != null) swipe.setRefreshing(false);
-                Toast.makeText(DashboardActivity.this, "Fallo conexión: " + msg, Toast.LENGTH_LONG).show();
+                Toast.makeText(UserDashboardActivity.this, "Fallo conexión: " + msg, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -154,7 +133,6 @@ public class DashboardActivity extends AppBaseActivity {
     }
 
     private void doLogout() {
-        // Clear session flag and cookies
         session.clear();
         RetrofitClient.clearCookies();
         Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show();

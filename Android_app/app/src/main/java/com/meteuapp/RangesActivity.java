@@ -4,11 +4,8 @@ import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -34,9 +31,9 @@ import retrofit2.Response;
  */
 public class RangesActivity extends AppBaseActivity {
 
-    private ListView lv;
+    private androidx.recyclerview.widget.RecyclerView rv;
     private ProgressBar progress;
-    private ArrayAdapter<String> adapter;
+    private com.meteuapp.adapters.SimpleStringAdapter adapter;
     private List<Range> ranges = new ArrayList<>();
     private Gson gson = new Gson();
 
@@ -47,15 +44,17 @@ public class RangesActivity extends AppBaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ranges);
-        lv = findViewById(R.id.lv_ranges);
+        rv = findViewById(R.id.rv_ranges);
         progress = findViewById(R.id.progress);
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
-        lv.setAdapter(adapter);
-
-        lv.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
-            Range r = ranges.get(position);
+        adapter = new com.meteuapp.adapters.SimpleStringAdapter();
+        rv.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+        rv.setAdapter(adapter);
+        adapter.setOnItemClick((pos, val) -> {
+            Range r = ranges.get(pos);
             showEditDialog(r);
         });
+        androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipe = findViewById(R.id.swipe);
+        swipe.setOnRefreshListener(this::fetchRangesFromServer);
 
         loadCachedRanges();
         fetchRangesFromServer();
@@ -84,20 +83,20 @@ public class RangesActivity extends AppBaseActivity {
 
     private void refreshList() {
         List<String> labels = new ArrayList<>();
-        for (Range r : ranges) {
-            labels.add(r.getParameter() + " — min=" + r.getMin() + " max=" + r.getMax());
-        }
-        adapter.clear(); adapter.addAll(labels); adapter.notifyDataSetChanged();
+        for (Range r : ranges) labels.add(r.getParameter() + " — min=" + r.getMin() + " max=" + r.getMax());
+        adapter.setItems(labels);
     }
 
     private void fetchRangesFromServer() {
         progress.setVisibility(View.VISIBLE);
+        androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipe = findViewById(R.id.swipe);
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
         Call<List<Map<String,Object>>> call = api.getRanges();
         call.enqueue(new Callback<List<Map<String,Object>>>() {
             @Override
             public void onResponse(Call<List<Map<String,Object>>> call, Response<List<Map<String,Object>>> response) {
                 progress.setVisibility(View.GONE);
+                if (swipe != null) swipe.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
                     ranges.clear();
                     for (Map<String,Object> m : response.body()) {
@@ -117,6 +116,7 @@ public class RangesActivity extends AppBaseActivity {
             @Override
             public void onFailure(Call<List<Map<String,Object>>> call, Throwable t) {
                 progress.setVisibility(View.GONE);
+                if (swipe != null) swipe.setRefreshing(false);
                 Toast.makeText(RangesActivity.this, "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });

@@ -16,7 +16,7 @@ public class AuthFilter implements Filter {
         HttpServletResponse resp = (HttpServletResponse) res;
         String path = r.getRequestURI().substring(r.getContextPath().length());
         // public routes
-        if (path.startsWith("/login") || path.startsWith("/login.html") || path.startsWith("/css/") || path.startsWith("/js/")) {
+        if (path.startsWith("/login") || path.startsWith("/login.html") || path.startsWith("/css/") || path.startsWith("/js/") || path.startsWith("/api/login")) {
             chain.doFilter(req, res);
             return;
         }
@@ -52,6 +52,11 @@ public class AuthFilter implements Filter {
             }
             chain.doFilter(req, res);
         } else {
+            // For API calls return 401 instead of redirecting to HTML login page
+            if (path.startsWith("/api/")) {
+                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
             resp.sendRedirect(r.getContextPath() + "/login.html");
         }
     }

@@ -45,13 +45,19 @@ public class ApiLoginServlet extends HttpServlet {
         HttpSession session = req.getSession(true);
         session.setAttribute("user", user);
 
-        // issue JWT for API clients
+        // issue JWT for API clients and include role
         String token = JwtUtil.generateToken(user);
+        String role = "";
+        try { role = Database.UserDAO.getUserRole(user); } catch (Exception e) { role = ""; }
         resp.setContentType("application/json; charset=utf-8");
         resp.setStatus(HttpServletResponse.SC_OK);
         PrintWriter out = resp.getWriter();
         out.print('{');
         out.print("\"token\":\"" + token + "\"");
+        if (role != null && !role.isEmpty()) {
+            out.print(',');
+            out.print("\"role\":\"" + role + "\"");
+        }
         out.print('}');
         out.flush();
     }

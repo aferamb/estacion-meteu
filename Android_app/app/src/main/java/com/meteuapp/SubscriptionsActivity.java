@@ -4,16 +4,15 @@ import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -31,13 +30,14 @@ import retrofit2.Response;
 
 public class SubscriptionsActivity extends AppBaseActivity {
 
-    private ListView lv;
+    private RecyclerView rv;
     private ProgressBar progress;
-    private ArrayAdapter<String> adapter;
+    private com.meteuapp.adapters.SimpleStringAdapter adapter;
     private List<String> topics = new ArrayList<>();
     private Gson gson = new Gson();
     private Button btnAddSubscription;
     private Button btnUnsubscribe;
+    private SwipeRefreshLayout swipe;
     private int selectedIndex = -1;
 
     private static final String PREFS = "meteu_prefs";
@@ -47,30 +47,23 @@ public class SubscriptionsActivity extends AppBaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_subscriptions);
-        lv = findViewById(R.id.lv_subscriptions);
+
+        rv = findViewById(R.id.rv_subscriptions);
         progress = findViewById(R.id.progress);
         btnAddSubscription = findViewById(R.id.btn_add_subscription);
         btnUnsubscribe = findViewById(R.id.btn_unsubscribe);
+        swipe = findViewById(R.id.swipe);
 
         // start with unsubscribe disabled until selection
         btnUnsubscribe.setEnabled(false);
 
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_single_choice, new ArrayList<>());
-        lv.setAdapter(adapter);
-        lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        adapter = new com.meteuapp.adapters.SimpleStringAdapter();
+        adapter.setOnItemLongClick((pos, value) -> confirmUnsubscribe(value));
+        adapter.setOnItemClick((pos, value) -> { selectedIndex = pos; btnUnsubscribe.setEnabled(true); });
 
-        lv.setOnItemLongClickListener((AdapterView<?> parent, View view, int position, long id) -> {
-            String topic = topics.get(position);
-            confirmUnsubscribe(topic);
-            return true;
-        });
-
-        lv.setOnItemClickListener((AdapterView<?> parent, View view, int position, long id) -> {
-            selectedIndex = position;
-            lv.setItemChecked(position, true);
-            // enable unsubscribe button when an item is selected
-            btnUnsubscribe.setEnabled(true);
-        });
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        rv.setAdapter(adapter);
+        if (swipe != null) swipe.setOnRefreshListener(this::fetchFromServer);
 
         btnAddSubscription.setOnClickListener(v -> showAddDialog());
         btnUnsubscribe.setOnClickListener(v -> {
@@ -105,24 +98,25 @@ public class SubscriptionsActivity extends AppBaseActivity {
     }
 
     private void refreshList() {
-        adapter.clear(); adapter.addAll(topics); adapter.notifyDataSetChanged();
-        // restore selection if possible
+        adapter.setItems(topics);
         if (selectedIndex >= 0 && selectedIndex < topics.size()) {
-            lv.setItemChecked(selectedIndex, true);
+            btnUnsubscribe.setEnabled(true);
         } else {
             selectedIndex = -1;
+            btnUnsubscribe.setEnabled(false);
         }
-        // no legacy tv_list anymore
+        if (swipe != null) swipe.setRefreshing(false);
     }
 
     private void fetchFromServer() {
-        progress.setVisibility(View.VISIBLE);
+        if (swipe != null && !swipe.isRefreshing()) progress.setVisibility(View.VISIBLE);
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
         Call<List<String>> call = api.getSubscriptions();
         call.enqueue(new Callback<List<String>>() {
             @Override
             public void onResponse(Call<List<String>> call, Response<List<String>> response) {
                 progress.setVisibility(View.GONE);
+                if (swipe != null) swipe.setRefreshing(false);
                 if (response.isSuccessful() && response.body() != null) {
                     topics.clear(); topics.addAll(response.body());
                     saveCached();
@@ -135,6 +129,7 @@ public class SubscriptionsActivity extends AppBaseActivity {
             @Override
             public void onFailure(Call<List<String>> call, Throwable t) {
                 progress.setVisibility(View.GONE);
+                if (swipe != null) swipe.setRefreshing(false);
                 Toast.makeText(SubscriptionsActivity.this, "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
@@ -165,7 +160,6 @@ public class SubscriptionsActivity extends AppBaseActivity {
                 if (response.isSuccessful()) {
                     if (!topics.contains(topic)) topics.add(topic);
                     saveCached(); refreshList();
-                    // local MQTT subscribe for instant delivery
                     try { MqttManager.getInstance(SubscriptionsActivity.this).subscribe(topic); } catch (Exception ignored) {}
                     Toast.makeText(SubscriptionsActivity.this, "Suscrito: " + topic, Toast.LENGTH_SHORT).show();
                 } else {

@@ -27,10 +27,13 @@ public interface ServerApi {
 
     @FormUrlEncoded
     @POST("api/login")
-    Call<TokenResponse> loginJwt(@Field("username") String username, @Field("password") String password);
+    Call<okhttp3.ResponseBody> loginJwt(@Field("username") String username, @Field("password") String password);
 
     @GET("admin/live")
     Call<LiveResponse> getLive();
+
+    @GET("api/live")
+    Call<LiveResponse> getLiveApi();
 
     @GET("sensor/readings")
     Call<List<SensorReading>> getSensorReadings(@Query("sensor_id") String sensorId,
@@ -77,11 +80,18 @@ public interface ServerApi {
     @GET("admin/users")
     Call<List<Map<String, Object>>> getUsers();
 
+    @GET("api/me")
+    Call<Map<String, Object>> whoami();
+
     @FormUrlEncoded
     @POST("admin/users/create")
     Call<Void> createUser(@Field("username") String username,
                           @Field("password") String password,
                           @Field("role") String role);
+
+    @FormUrlEncoded
+    @POST("admin/users/delete")
+    Call<Void> deleteUser(@Field("username") String username);
 
     @GET("logout")
     Call<Void> logout();

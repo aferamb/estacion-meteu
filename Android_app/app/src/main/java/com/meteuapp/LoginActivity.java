@@ -12,6 +12,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.meteuapp.models.TokenResponse;
 
+import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -63,31 +68,63 @@ public class LoginActivity extends AppCompatActivity {
 
     private void attemptJwtLogin(String user, String pass) {
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
-        Call<TokenResponse> jwtCall = api.loginJwt(user, pass);
-        jwtCall.enqueue(new Callback<TokenResponse>() {
+        Call<ResponseBody> jwtCall = api.loginJwt(user, pass);
+        jwtCall.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<TokenResponse> call, Response<TokenResponse> response) {
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 progress.setVisibility(View.GONE);
-                if (response.isSuccessful() && response.body() != null && response.body().getToken() != null) {
-                    String token = response.body().getToken();
-                    session.setLoggedIn(user, true);
-                    session.setJwtToken(token);
-                    Toast.makeText(LoginActivity.this, "Login correcto (JWT)", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
-                    finish();
-                } else {
-                    attemptLegacyLogin(user, pass);
+                Log.d("LoginActivity", "JWT login response code=" + response.code());
+                String raw = null;
+                try {
+                    if (response.isSuccessful() && response.body() != null) {
+                        raw = response.body().string();
+                    } else if (response.errorBody() != null) {
+                        raw = response.errorBody().string();
+                    }
+                } catch (Exception e) {
+                    Log.d("LoginActivity", "Error reading raw body: " + e.getMessage());
                 }
+
+                if (raw != null) {
+                    Log.d("LoginActivity", "JWT raw response: " + raw);
+                    // try parse as JSON TokenResponse
+                    try {
+                        TokenResponse tr = new Gson().fromJson(raw, TokenResponse.class);
+                        if (tr != null && tr.getToken() != null) {
+                            session.setLoggedIn(user, true);
+                            session.setJwtToken(tr.getToken());
+                            if (tr.getRole() != null) session.setRole(tr.getRole());
+                            Log.d("LoginActivity", "JWT parsed token, role=" + tr.getRole());
+                            Toast.makeText(LoginActivity.this, "Login correcto (JWT)", Toast.LENGTH_SHORT).show();
+                            // route by role: admin -> DashboardActivity, others -> UserDashboardActivity
+                            if (tr.getRole() != null && tr.getRole().equalsIgnoreCase("admin")) {
+                                startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
+                            } else {
+                                startActivity(new Intent(LoginActivity.this, UserDashboardActivity.class));
+                            }
+                            finish();
+                            return;
+                        }
+                    } catch (JsonSyntaxException jse) {
+                        Log.d("LoginActivity", "JWT parse error: " + jse.getMessage());
+                    }
+                }
+
+                Log.d("LoginActivity", "JWT login did not return token or was not JSON; aborting login (legacy disabled)");
+                Toast.makeText(LoginActivity.this, "Login JWT falló: respuesta inesperada", Toast.LENGTH_LONG).show();
             }
 
             @Override
-            public void onFailure(Call<TokenResponse> call, Throwable t) {
-                // network error trying JWT; fall back to legacy login
-                attemptLegacyLogin(user, pass);
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                progress.setVisibility(View.GONE);
+                Log.e("LoginActivity", "JWT login failure: " + t.getMessage(), t);
+                Toast.makeText(LoginActivity.this, "Error conexión JWT: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
+    // Legacy login disabled. Kept method commented for possible future use.
+    /*
     private void attemptLegacyLogin(String user, String pass) {
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
         Call<Void> legacyCall = api.login(user, pass);
@@ -97,7 +134,22 @@ public class LoginActivity extends AppCompatActivity {
                 progress.setVisibility(View.GONE);
                 if (response.isSuccessful()) {
                     session.setLoggedIn(user, true);
-                    Toast.makeText(LoginActivity.this, "Login correcto", Toast.LENGTH_SHORT).show();
+                    // fetch role via /api/me and store it
+                    try {
+                        ServerApi a2 = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
+                        a2.whoami().enqueue(new Callback<java.util.Map<String,Object>>() {
+                            @Override
+                            public void onResponse(Call<java.util.Map<String,Object>> call, Response<java.util.Map<String,Object>> response) {
+                                if (response.isSuccessful() && response.body() != null && response.body().get("role") != null) {
+                                    session.setRole(response.body().get("role").toString());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<java.util.Map<String,Object>> call, Throwable t) { }
+                        });
+                    } catch (Exception ignored) {}
+                    Toast.makeText(LoginActivity.this, "Login correcto Legacy", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(LoginActivity.this, DashboardActivity.class));
                     finish();
                 } else {
@@ -112,4 +164,5 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+    */
 }

@@ -32,6 +32,8 @@
             <activity android:name=".SubscriptionsActivity" android:exported="false" />
             <activity android:name=".PublishAlertActivity" android:exported="false" />
             <activity android:name=".AlarmsActivity" android:exported="false" />
+            <activity android:name=".UsersActivity" android:exported="false" />
+            <activity android:name=".UserDashboardActivity" android:exported="false" />
     </application>
 
 </manifest>
