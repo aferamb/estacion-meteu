@@ -47,6 +47,9 @@ public class DashboardActivity extends AppBaseActivity {
         tvWelcome = findViewById(R.id.tv_welcome);
         tvWelcome.setText("Dashboard — " + session.getUsername());
 
+        // show cached subscriptions count in welcome
+        updateSubscriptionsCount();
+
         Button btnRefresh = findViewById(R.id.btn_refresh);
         Button btnLogout = findViewById(R.id.btn_logout);
         btnRefresh.setOnClickListener(v -> loadLive());
@@ -59,6 +62,26 @@ public class DashboardActivity extends AppBaseActivity {
 
         // Load on start
         loadLive();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // refresh subscriptions count when returning
+        updateSubscriptionsCount();
+    }
+
+    private void updateSubscriptionsCount() {
+        try {
+            String json = getSharedPreferences("meteu_prefs", MODE_PRIVATE).getString("cached_subscriptions", null);
+            int cnt = 0;
+            if (json != null) {
+                com.google.gson.Gson g = new com.google.gson.Gson();
+                java.util.List<String> list = g.fromJson(json, new com.google.gson.reflect.TypeToken<java.util.List<String>>(){}.getType());
+                if (list != null) cnt = list.size();
+            }
+            tvWelcome.setText("Dashboard — " + session.getUsername() + " (subs: " + cnt + ")");
+        } catch (Exception ignored) {}
     }
 
     private void loadLive() {

@@ -82,4 +82,19 @@ public interface ServerApi {
     Call<Void> createUser(@Field("username") String username,
                           @Field("password") String password,
                           @Field("role") String role);
+
+    @GET("logout")
+    Call<Void> logout();
+
+    @GET("admin/ranges")
+    Call<java.util.List<java.util.Map<String, Object>>> getRanges();
+
+    @FormUrlEncoded
+    @POST("admin/ranges")
+    Call<java.util.Map<String, Object>> postRange(@Field("parameter") String parameter,
+                                                 @Field("min") String min,
+                                                 @Field("max") String max);
+
+    @GET("Health")
+    Call<java.util.Map<String, Object>> getHealth();
 }

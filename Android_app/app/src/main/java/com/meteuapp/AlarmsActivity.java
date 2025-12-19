@@ -3,7 +3,8 @@ package com.meteuapp;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ListView;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,7 +20,8 @@ import retrofit2.Response;
 public class AlarmsActivity extends AppBaseActivity {
 
     private EditText etSensor;
-    private TextView tvList;
+    private ListView lvAlarms;
+    private ArrayAdapter<String> alarmsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +29,9 @@ public class AlarmsActivity extends AppBaseActivity {
         setContentView(R.layout.activity_alarms);
 
         etSensor = findViewById(R.id.et_sensor);
-        tvList = findViewById(R.id.tv_list);
+        lvAlarms = findViewById(R.id.lv_alarms);
+        alarmsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new java.util.ArrayList<>());
+        lvAlarms.setAdapter(alarmsAdapter);
         Button btn = findViewById(R.id.btn_refresh);
         btn.setOnClickListener(v -> refresh());
 
@@ -38,21 +42,20 @@ public class AlarmsActivity extends AppBaseActivity {
         String sensor = etSensor.getText().toString().trim();
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
         Call<List<Alarm>> call = api.getAlarms(sensor.isEmpty()?null:sensor, null, null, 200);
-        tvList.setText("Cargando...\n");
+        alarmsAdapter.clear(); alarmsAdapter.add("Cargando...");
         call.enqueue(new Callback<List<Alarm>>() {
             @Override
             public void onResponse(Call<List<Alarm>> call, Response<List<Alarm>> response) {
-                if (!response.isSuccessful() || response.body() == null) { tvList.setText("Error cargando"); return; }
-                StringBuilder b = new StringBuilder();
+                if (!response.isSuccessful() || response.body() == null) { alarmsAdapter.clear(); alarmsAdapter.add("Error cargando"); return; }
+                alarmsAdapter.clear();
                 for (Alarm a : response.body()) {
-                    b.append(a.getTriggeredAt()).append(" | ").append(a.getSensorId()).append(" | ").append(a.getParameter()).append(" | active:").append(a.getActive()).append("\n");
+                    alarmsAdapter.add(a.getTriggeredAt() + " | " + a.getSensorId() + " | " + a.getParameter() + " | active:" + a.getActive());
                 }
-                tvList.setText(b.toString());
             }
 
             @Override
             public void onFailure(Call<List<Alarm>> call, Throwable t) {
-                tvList.setText("Error: " + t.getMessage());
+                alarmsAdapter.clear(); alarmsAdapter.add("Error: " + t.getMessage());
             }
         });
     }
