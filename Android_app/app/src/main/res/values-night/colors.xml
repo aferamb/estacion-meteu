@@ -5,4 +5,5 @@
     <!-- darker selected bg for night mode -->
     <color name="selected_item_bg">#263238</color>
     <color name="text_primary">#FFFFFFFF</color>
+    <color name="background_secondary">#37474F</color>
 </resources>

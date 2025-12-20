@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="6dp"
+    android:background="?android:attr/listDivider">
+
+    <TextView android:layout_width="100dp" android:layout_height="wrap_content" android:text="sensor_id" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="sensor_type" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="100dp" android:layout_height="wrap_content" android:text="street_id" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="150dp" android:layout_height="wrap_content" android:text="timestamp" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="100dp" android:layout_height="wrap_content" android:text="lat" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="100dp" android:layout_height="wrap_content" android:text="long" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="60dp" android:layout_height="wrap_content" android:text="alt" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="district" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="120dp" android:layout_height="wrap_content" android:text="neighborhood" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="temp" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="humid" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="60dp" android:layout_height="wrap_content" android:text="aqi" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="60dp" android:layout_height="wrap_content" android:text="lux" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="sound_db" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="atmhpa" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="60dp" android:layout_height="wrap_content" android:text="uv_index" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="60dp" android:layout_height="wrap_content" android:text="bsec_status" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="iaq" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="static_iaq" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="co2_eq" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="breath_voc_eq" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="raw_temperature" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="raw_humidity" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="pressure_hpa" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="100dp" android:layout_height="wrap_content" android:text="gas_resistance_ohm" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="80dp" android:layout_height="wrap_content" android:text="gas_percentage" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="70dp" android:layout_height="wrap_content" android:text="stabilization_status" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="70dp" android:layout_height="wrap_content" android:text="run_in_status" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="sensor_heat_comp_temp" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="90dp" android:layout_height="wrap_content" android:text="sensor_heat_comp_hum" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/text_primary" android:layout_marginStart="12dp" />
+
+</LinearLayout>

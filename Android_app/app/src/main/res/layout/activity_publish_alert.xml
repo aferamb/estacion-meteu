@@ -12,7 +12,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Destino"/>
+            android:text="Destino"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/text_primary" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -24,7 +27,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Usar suscripción" />
+                android:text="Usar suscripción"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary" />
 
             <Switch
                 android:id="@+id/sw_use_subscription"
@@ -37,52 +42,71 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Suscripciones guardadas"/>
+            android:text="Suscripciones guardadas"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/text_primary" />
         <Spinner
             android:id="@+id/spinner_subs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:background="@color/background_secondary"
+            android:layout_marginTop="6dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="o Topic manual"/>
+            android:text="o Topic manual"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/text_primary" />
         <EditText
             android:id="@+id/et_topic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:hint="ej. sensors/street/sensorID" />
+            android:hint="ej. sensors/street/sensorID"
+            android:layout_marginTop="6dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Clave de alerta"/>
+            android:text="Clave de alerta"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/text_primary" />
         <EditText
             android:id="@+id/et_alert"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:hint="WTH001" />
+            android:hint="WTH001"
+            android:layout_marginTop="6dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Mensaje JSON (opcional)"/>
+            android:text="Mensaje JSON (opcional)"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/text_primary" />
         <EditText
             android:id="@+id/et_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textMultiLine"
             android:minLines="3"
-            android:hint='{"alerta":"WTH002","info":"..."}' />
+            android:hint='{"alerta":"WTH002","info":"..."}'
+            android:layout_marginTop="6dp" />
 
         <Button
             android:id="@+id/btn_publish"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Publicar"/>
+            android:text="Publicar"
+            android:layout_marginTop="14dp"
+            android:textSize="16sp" />
 
     </LinearLayout>
 </ScrollView>

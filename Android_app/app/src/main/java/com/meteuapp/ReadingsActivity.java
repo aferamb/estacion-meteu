@@ -4,10 +4,15 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.meteuapp.adapters.ReadingTableAdapter;
 
 import com.meteuapp.models.SensorReading;
 
@@ -20,7 +25,9 @@ import retrofit2.Response;
 public class ReadingsActivity extends AppBaseActivity {
 
     private EditText etSensor, etStreet, etLimit;
-    private TextView tvResult;
+    private RecyclerView rvReadings;
+    private ReadingTableAdapter adapter;
+    private SwipeRefreshLayout swipe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +38,15 @@ public class ReadingsActivity extends AppBaseActivity {
         etStreet = findViewById(R.id.et_street);
         etLimit = findViewById(R.id.et_limit);
         Button btn = findViewById(R.id.btn_query);
-        tvResult = findViewById(R.id.tv_result);
+
+        swipe = findViewById(R.id.swipe_readings);
+        rvReadings = findViewById(R.id.rv_readings);
+        rvReadings.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new ReadingTableAdapter();
+        rvReadings.setAdapter(adapter);
+
+        // Pull-to-refresh should perform the same query as the Consultar button
+        swipe.setOnRefreshListener(() -> query());
 
         btn.setOnClickListener(v -> query());
     }
@@ -44,22 +59,19 @@ public class ReadingsActivity extends AppBaseActivity {
 
         ServerApi api = RetrofitClient.getRetrofitInstance().create(ServerApi.class);
         Call<List<SensorReading>> call = api.getSensorReadings(sensor.isEmpty()?null:sensor, street.isEmpty()?null:street, null, null, limit);
-        tvResult.setText("Cargando...\n");
+        swipe.setRefreshing(true);
         call.enqueue(new Callback<List<SensorReading>>() {
             @Override
             public void onResponse(Call<List<SensorReading>> call, Response<List<SensorReading>> response) {
-                if (!response.isSuccessful() || response.body() == null) { tvResult.setText("Error en la consulta"); return; }
-                StringBuilder b = new StringBuilder();
-                for (SensorReading r : response.body()) {
-                    b.append(r.getRecordedAt()).append(" | sensor:").append(r.getSensorId()).append(" | t:").append(r.getTemp())
-                            .append(" h:").append(r.getHumid()).append(" aqi:").append(r.getAqi()).append(" lux:").append(r.getLux()).append("\n");
-                }
-                tvResult.setText(b.toString());
+                swipe.setRefreshing(false);
+                if (!response.isSuccessful() || response.body() == null) { Toast.makeText(ReadingsActivity.this, "Error en la consulta", Toast.LENGTH_SHORT).show(); return; }
+                adapter.setItems(response.body());
             }
 
             @Override
             public void onFailure(Call<List<SensorReading>> call, Throwable t) {
-                tvResult.setText("Fallo conexión: " + t.getMessage());
+                swipe.setRefreshing(false);
+                Toast.makeText(ReadingsActivity.this, "Fallo conexión: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
