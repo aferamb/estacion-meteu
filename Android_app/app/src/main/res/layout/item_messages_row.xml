@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+    <TextView android:id="@+id/col_sensor_id" android:layout_width="100dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_sensor_type" android:layout_width="80dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_street_id" android:layout_width="100dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_timestamp" android:layout_width="150dp" android:layout_height="wrap_content" android:textSize="14sp" android:ellipsize="end" android:maxLines="1" />
+    <TextView android:id="@+id/col_lat" android:layout_width="100dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_long" android:layout_width="100dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_alt" android:layout_width="60dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_district" android:layout_width="120dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_neighborhood" android:layout_width="120dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_temp" android:layout_width="80dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_humid" android:layout_width="80dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_aqi" android:layout_width="60dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_lux" android:layout_width="60dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_sound_db" android:layout_width="80dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_atmhpa" android:layout_width="80dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+    <TextView android:id="@+id/col_uv_index" android:layout_width="60dp" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginStart="12dp" />
+
+</LinearLayout>

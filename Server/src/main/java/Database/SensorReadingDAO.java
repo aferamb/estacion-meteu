@@ -90,6 +90,28 @@ public class SensorReadingDAO {
             Double altitude = getDouble(location, "alt");
             String district = getString(location, "district");
             String neighborhood = getString(location, "neighborhood");
+            // Fallback to top-level flat fields if nested structure not provided
+            if (location == null) {
+                latitude = getDouble(map, "lat");
+                longitude = getDouble(map, "long");
+                if (longitude == null) longitude = getDouble(map, "lng");
+                altitude = getDouble(map, "alt");
+                district = getString(map, "district");
+                neighborhood = getString(map, "neighborhood");
+                // also accept 'latitude'/'longitude' as top-level
+                if (latitude == null) latitude = getDouble(map, "latitude");
+                if (longitude == null) longitude = getDouble(map, "longitude");
+            } else {
+                // also accept top-level as additional fallback
+                if (latitude == null) latitude = getDouble(map, "lat");
+                if (longitude == null) {
+                    longitude = getDouble(map, "long");
+                    if (longitude == null) longitude = getDouble(map, "lng");
+                }
+                if (altitude == null) altitude = getDouble(map, "alt");
+                if (district == null) district = getString(map, "district");
+                if (neighborhood == null) neighborhood = getString(map, "neighborhood");
+            }
 
             // data nested
             Map<String, Object> data = getMap(map, "data");
@@ -100,6 +122,24 @@ public class SensorReadingDAO {
             Double soundDb = getDouble(data, "sound_db");
             Double atmhpa = getDouble(data, "atmhpa");
             Double uvIndex = getDouble(data, "uv_index");
+            // Fallback to top-level flat fields if data map not provided
+            if (data == null) {
+                temp = getDouble(map, "temp");
+                humid = getDouble(map, "humid");
+                aqi = getInt(map, "aqi");
+                lux = getDouble(map, "lux");
+                soundDb = getDouble(map, "sound_db");
+                atmhpa = getDouble(map, "atmhpa");
+                uvIndex = getDouble(map, "uv_index");
+            } else {
+                if (temp == null) temp = getDouble(map, "temp");
+                if (humid == null) humid = getDouble(map, "humid");
+                if (aqi == null) aqi = getInt(map, "aqi");
+                if (lux == null) lux = getDouble(map, "lux");
+                if (soundDb == null) soundDb = getDouble(map, "sound_db");
+                if (atmhpa == null) atmhpa = getDouble(map, "atmhpa");
+                if (uvIndex == null) uvIndex = getDouble(map, "uv_index");
+            }
 
             // extra nested
             Map<String, Object> extra = getMap(map, "extra");

@@ -29,8 +29,8 @@ public class DashboardActivity extends AppBaseActivity {
     private SessionManager session;
     private TextView tvWelcome;
     private androidx.recyclerview.widget.RecyclerView rvMessages, rvStations;
-    private com.meteuapp.adapters.MessageAdapter messageAdapter;
-    private com.meteuapp.adapters.StationAdapter stationAdapter;
+    private com.meteuapp.adapters.RecentMessagesAdapter recentMessagesAdapter;
+    private com.meteuapp.adapters.RecentStationsAdapter recentStationsAdapter;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipe;
 
     @Override
@@ -52,12 +52,12 @@ public class DashboardActivity extends AppBaseActivity {
         tvWelcome = findViewById(R.id.tv_welcome);
         tvWelcome.setText("Dashboard — " + session.getUsername());
 
-        messageAdapter = new com.meteuapp.adapters.MessageAdapter();
-        stationAdapter = new com.meteuapp.adapters.StationAdapter();
+        recentMessagesAdapter = new com.meteuapp.adapters.RecentMessagesAdapter();
+        recentStationsAdapter = new com.meteuapp.adapters.RecentStationsAdapter();
         rvMessages.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
-        rvMessages.setAdapter(messageAdapter);
+        rvMessages.setAdapter(recentMessagesAdapter);
         rvStations.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
-        rvStations.setAdapter(stationAdapter);
+        rvStations.setAdapter(recentStationsAdapter);
         if (swipe != null) swipe.setOnRefreshListener(this::loadLive);
 
         // show cached subscriptions count in welcome
@@ -131,8 +131,9 @@ public class DashboardActivity extends AppBaseActivity {
                 LiveResponse lr = response.body();
                 List<SensorMessage> msgs = lr.getMessages();
                 List<Station> sts = lr.getStations();
-                messageAdapter.setItems(msgs);
-                stationAdapter.setItems(sts);
+                // Populate recent messages/stations with required subset columns
+                recentMessagesAdapter.setItems(msgs);
+                recentStationsAdapter.setItems(sts);
             }
 
             @Override

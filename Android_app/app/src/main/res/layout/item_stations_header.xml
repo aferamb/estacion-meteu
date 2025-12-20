@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="6dp"
+    android:background="?android:attr/listDivider">
+
+    <TextView android:layout_width="200dp" android:layout_height="wrap_content" android:text="station_id" android:textStyle="bold" android:textSize="16sp" android:layout_marginStart="12dp" />
+    <TextView android:layout_width="200dp" android:layout_height="wrap_content" android:text="last_seen" android:textStyle="bold" android:textSize="16sp" android:layout_marginStart="12dp" />
+
+</LinearLayout>
