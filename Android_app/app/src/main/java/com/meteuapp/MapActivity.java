@@ -42,6 +42,7 @@ import java.util.Map;
  * - You must add a Google Maps API key in the AndroidManifest as:
  *   <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR_API_KEY" />
  */
+@SuppressWarnings("deprecation")
 public class MapActivity extends AppBaseActivity implements MqttManager.MqttListener {
 
     private MapView map;
