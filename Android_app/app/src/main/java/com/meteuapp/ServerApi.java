@@ -53,7 +53,7 @@ public interface ServerApi {
                                                    @Query("limit") Integer limit,
                                                    @Query("offset") Integer offset);
 
-    @GET("admin/subscriptions")
+    @GET("api/subscriptions")
     Call<List<String>> getSubscriptions();
 
     @FormUrlEncoded

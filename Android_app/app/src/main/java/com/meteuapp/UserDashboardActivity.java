@@ -25,8 +25,8 @@ public class UserDashboardActivity extends AppBaseActivity {
     private SessionManager session;
     private TextView tvWelcome;
     private androidx.recyclerview.widget.RecyclerView rvMessages, rvStations;
-    private com.meteuapp.adapters.MessageAdapter messageAdapter;
-    private com.meteuapp.adapters.StationAdapter stationAdapter;
+    private com.meteuapp.adapters.RecentMessagesAdapter messageAdapter;
+    private com.meteuapp.adapters.RecentStationsAdapter stationAdapter;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipe;
 
     @Override
@@ -47,15 +47,15 @@ public class UserDashboardActivity extends AppBaseActivity {
         tvWelcome = findViewById(R.id.tv_welcome);
         tvWelcome.setText("Dashboard — " + session.getUsername());
 
-        messageAdapter = new com.meteuapp.adapters.MessageAdapter();
-        stationAdapter = new com.meteuapp.adapters.StationAdapter();
+        messageAdapter = new com.meteuapp.adapters.RecentMessagesAdapter();
+        stationAdapter = new com.meteuapp.adapters.RecentStationsAdapter();
         rvMessages.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
         rvMessages.setAdapter(messageAdapter);
         rvStations.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
         rvStations.setAdapter(stationAdapter);
         if (swipe != null) swipe.setOnRefreshListener(this::loadLive);
 
-        // limited UI: hide admin-only buttons
+        // limited UI: hide admin-only buttons, but keep monitoring options
         Button btnLogout = findViewById(R.id.btn_logout);
         Button btnReadings = findViewById(R.id.btn_readings);
         Button btnReadingsQuery = findViewById(R.id.btn_readings_query);
@@ -64,11 +64,16 @@ public class UserDashboardActivity extends AppBaseActivity {
         Button btnSubscriptions = findViewById(R.id.btn_subscriptions);
         Button btnPublish = findViewById(R.id.btn_publish);
         Button btnUsers = findViewById(R.id.btn_users);
+        Button btnTopicMonitoring = findViewById(R.id.btn_topic_monitoring);
+        Button btnStationMonitoring = findViewById(R.id.btn_station_monitoring);
 
         // show only allowed buttons for normal users
         btnReadings.setOnClickListener(v -> startActivity(new Intent(this, ReadingsActivity.class)));
         if (btnReadingsQuery != null) btnReadingsQuery.setOnClickListener(v -> startActivity(new Intent(this, ReadingsQueryActivity.class)));
         btnLogout.setOnClickListener(v -> doLogout());
+
+        if (btnTopicMonitoring != null) btnTopicMonitoring.setOnClickListener(v -> startActivity(new Intent(this, TopicMonitoringActivity.class)));
+        if (btnStationMonitoring != null) btnStationMonitoring.setOnClickListener(v -> startActivity(new Intent(this, StationSelectionActivity.class)));
 
         // hide admin-only buttons for normal users
         if (btnAlarms != null) btnAlarms.setVisibility(android.view.View.GONE);

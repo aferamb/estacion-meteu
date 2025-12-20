@@ -40,19 +40,29 @@ public class UserLiveServlet extends HttpServlet {
         try {
             con = conector.obtainConnection(true);
 
-            // recent messages
-            PreparedStatement ps = con.prepareStatement("SELECT sensor_id, recorded_at, temp, humid, aqi, lux FROM sensor_readings ORDER BY recorded_at DESC LIMIT 30");
+            // recent messages - include the extended set of fields so user view matches admin view
+            PreparedStatement ps = con.prepareStatement("SELECT sensor_id, sensor_type, street_id, recorded_at, latitude, longitude, altitude, district, neighborhood, temp, humid, aqi, lux, sound_db, atmhpa, uv_index FROM sensor_readings ORDER BY recorded_at DESC LIMIT 30");
             ResultSet rs = ps.executeQuery();
             List<Map<String,Object>> msgs = new ArrayList<>();
             while (rs.next()) {
                 Map<String,Object> m = new HashMap<>();
                 m.put("sensor_id", rs.getString("sensor_id"));
+                m.put("sensor_type", rs.getString("sensor_type"));
+                m.put("street_id", rs.getString("street_id"));
                 Timestamp ts = rs.getTimestamp("recorded_at");
                 m.put("recorded_at", ts == null ? null : ts.toString());
+                m.put("latitude", rs.getObject("latitude") == null ? null : rs.getDouble("latitude"));
+                m.put("longitude", rs.getObject("longitude") == null ? null : rs.getDouble("longitude"));
+                m.put("altitude", rs.getObject("altitude") == null ? null : rs.getDouble("altitude"));
+                m.put("district", rs.getString("district"));
+                m.put("neighborhood", rs.getString("neighborhood"));
                 m.put("temp", rs.getObject("temp") == null ? null : rs.getDouble("temp"));
                 m.put("humid", rs.getObject("humid") == null ? null : rs.getDouble("humid"));
                 m.put("aqi", rs.getObject("aqi") == null ? null : rs.getInt("aqi"));
                 m.put("lux", rs.getObject("lux") == null ? null : rs.getDouble("lux"));
+                m.put("sound_db", rs.getObject("sound_db") == null ? null : rs.getDouble("sound_db"));
+                m.put("atmhpa", rs.getObject("atmhpa") == null ? null : rs.getDouble("atmhpa"));
+                m.put("uv_index", rs.getObject("uv_index") == null ? null : rs.getDouble("uv_index"));
                 msgs.add(m);
             }
 

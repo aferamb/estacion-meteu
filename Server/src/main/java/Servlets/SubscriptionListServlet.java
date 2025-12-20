@@ -11,7 +11,7 @@ import java.io.PrintWriter;
 import com.google.gson.Gson;
 import java.util.List;
 
-@WebServlet("/admin/subscriptions")
+@WebServlet({"/admin/subscriptions", "/api/subscriptions"})
 public class SubscriptionListServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
