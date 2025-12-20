@@ -14,6 +14,11 @@ import paho.mqtt.client as mqtt
 # -------------------------
 # Configuración de estaciones
 # -------------------------
+
+
+# Para modificar los datos de las estaciones se puede hacer a partir de la línea 181 en Main()
+
+
 @dataclass
 class Location:
     lat: float
