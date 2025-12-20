@@ -15,24 +15,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import com.meteuapp.mqtt.MqttManager;
 
 import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class StationLiveActivity extends AppBaseActivity {
+public class StationLiveActivity extends AppBaseActivity implements MqttManager.MqttListener {
 
     private LinearLayout container;
     private TextView tvStatus;
     private Button btnDisconnect;
-    private MqttClient client;
+    private String currentTopic;
     private final Gson gson = new Gson();
     // Keep map of parameter -> TextView for fast updates
     private final Map<String, TextView> cardMap = new LinkedHashMap<>();
@@ -61,10 +55,18 @@ public class StationLiveActivity extends AppBaseActivity {
             return;
         }
 
-        connectAndSubscribe(topic);
+        currentTopic = topic;
+        // register to shared MqttManager and subscribe
+        MqttManager mm = MqttManager.getInstance(this);
+        mm.addListener(this);
+        mm.connect();
+        try { mm.subscribe(topic); } catch (Exception ignored) {}
+        updateStatus("Suscrito: " + topic);
 
         btnDisconnect.setOnClickListener(v -> {
-            stopMonitor();
+            // unregister listener and optionally unsubscribe
+            try { MqttManager.getInstance(StationLiveActivity.this).removeListener(StationLiveActivity.this); } catch (Exception ignored) {}
+            try { MqttManager.getInstance(StationLiveActivity.this).unsubscribe(currentTopic); } catch (Exception ignored) {}
             finish();
         });
     }
@@ -87,36 +89,22 @@ public class StationLiveActivity extends AppBaseActivity {
         }
     }
 
-    private void connectAndSubscribe(String topic) {
+    @Override
+    public void onMessage(String topic, String payload) {
+        // only handle messages for the current topic (exact or suffix match)
         try {
-            String broker = "tcp://192.168.2.156:1883"; // consider making configurable later
-            client = new MqttClient(broker, MqttClient.generateClientId(), new MemoryPersistence());
-            MqttConnectOptions opts = new MqttConnectOptions();
-            opts.setCleanSession(true);
-            client.setCallback(new MqttCallbackExtended() {
-                @Override
-                public void connectComplete(boolean reconnect, String serverURI) { updateStatus("Conectado"); }
-
-                @Override
-                public void connectionLost(Throwable cause) { updateStatus("Conexión perdida"); }
-
-                @Override
-                public void messageArrived(String topic, MqttMessage message) {
-                    String payload = new String(message.getPayload());
-                    handleIncoming(payload);
-                }
-
-                @Override
-                public void deliveryComplete(IMqttDeliveryToken token) { }
-            });
-            client.connect(opts);
-            client.subscribe(topic, (t, msg) -> handleIncoming(new String(msg.getPayload())));
-            updateStatus("Suscrito: " + topic);
-        } catch (MqttException e) {
-            Log.e("meteu","MQTT error: "+e.getMessage());
-            updateStatus("Error MQTT");
-        }
+            if (currentTopic == null) return;
+            if (topic.equals(currentTopic) || topic.endsWith(currentTopic)) {
+                handleIncoming(payload);
+            }
+        } catch (Exception e) { Log.w("meteu","onMessage handler error: " + e.getMessage()); }
     }
+
+    @Override
+    public void onConnected() { updateStatus("Conectado"); }
+
+    @Override
+    public void onDisconnected() { updateStatus("Conexión perdida"); }
 
     private void handleIncoming(String payload) {
         try {
@@ -141,17 +129,66 @@ public class StationLiveActivity extends AppBaseActivity {
                     flat.put(e.getKey(), v);
                 }
             }
+            // helper to search multiple possible keys
+            java.util.function.Function<String[], Object> findFirst = (keys) -> {
+                for (String k : keys) {
+                    if (k == null) continue;
+                    if (flat.containsKey(k)) {
+                        Object v = flat.get(k);
+                        if (v != null) return v;
+                    }
+                }
+                return null;
+            };
+
             // update cards with values for PARAMS
             runOnUiThread(() -> {
                 for (String p : PARAMS) {
                     Object val = null;
-                    // try direct keys and common variants
-                    if (flat.containsKey(p)) val = flat.get(p);
-                    else if (flat.containsKey(p.replace("long", "longitude"))) val = flat.get(p.replace("long", "longitude"));
-                    else if (flat.containsKey(p.replace("lat", "latitude"))) val = flat.get(p.replace("lat", "latitude"));
+                    switch (p) {
+                        case "sensor_id":
+                            val = findFirst.apply(new String[]{"sensor_id","id","sensor","device","sensor.id","meta.sensor_id"});
+                            break;
+                        case "sensor_type":
+                            val = findFirst.apply(new String[]{"sensor_type","type","sensor.type"});
+                            break;
+                        case "street_id":
+                            val = findFirst.apply(new String[]{"street_id","street","streetId","location.street"});
+                            break;
+                        case "timestamp":
+                            val = findFirst.apply(new String[]{"timestamp","recorded_at","time","ts","t"});
+                            break;
+                        case "lat":
+                            val = findFirst.apply(new String[]{"lat","latitude","gps.latitude","location.latitude","position.lat"});
+                            break;
+                        case "long":
+                            val = findFirst.apply(new String[]{"long","longitude","lng","lon","gps.longitude","location.longitude","position.lon"});
+                            break;
+                        case "alt":
+                            val = findFirst.apply(new String[]{"alt","altitude","elevation"});
+                            break;
+                        case "district":
+                            val = findFirst.apply(new String[]{"district","area","region"});
+                            break;
+                        case "neighborhood":
+                            val = findFirst.apply(new String[]{"neighborhood","neighbourhood","suburb"});
+                            break;
+                        default:
+                            // measurement params: try exact name and common variants
+                            val = findFirst.apply(new String[]{p, p.replace("_",""), p.replace("temp","temperature")});
+                    }
+
                     TextView tv = cardMap.get(p);
                     if (tv != null) {
-                        String display = val == null ? "—" : String.valueOf(val);
+                        String display = "—";
+                        if (val != null) {
+                            if (val instanceof Number) {
+                                // format decimals
+                                display = String.format(java.util.Locale.getDefault(), "%.2f", ((Number) val).doubleValue());
+                            } else {
+                                display = String.valueOf(val);
+                            }
+                        }
                         tv.setText(p + "\n" + display);
                     }
                 }
@@ -165,20 +202,9 @@ public class StationLiveActivity extends AppBaseActivity {
         runOnUiThread(() -> tvStatus.setText("Estado: " + s));
     }
 
-    private void stopMonitor() {
-        try {
-            if (client != null && client.isConnected()) {
-                client.disconnect();
-                updateStatus("desconectado");
-            }
-        } catch (MqttException e) {
-            Log.w("meteu","Error disconnecting: " + e.getMessage());
-        }
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopMonitor();
+        try { MqttManager.getInstance(this).removeListener(this); } catch (Exception ignored) {}
     }
 }

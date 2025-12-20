@@ -49,4 +49,8 @@ dependencies {
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
     // OkHttp logging interceptor for request/response body logging used by RetrofitClient
     implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'
+    // Google Maps
+    implementation 'com.google.android.gms:play-services-maps:18.1.0'
+    // osmdroid (OpenStreetMap, no API key required)
+    implementation 'org.osmdroid:osmdroid-android:6.1.13'
 }

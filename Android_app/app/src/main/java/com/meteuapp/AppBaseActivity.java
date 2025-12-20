@@ -92,6 +92,8 @@ public class AppBaseActivity extends AppCompatActivity {
         menu.add(0, 4, 0, "Monitor Topic");
         menu.add(0, 5, 0, "Monitor Estación");
         menu.add(0, 6, 0, "Subscriptions");
+        // Map view for subscriptions
+        menu.add(0, 11, 0, "Mapa");
 
         // admin-only
         SessionManager sm = new SessionManager(this);
@@ -115,6 +117,7 @@ public class AppBaseActivity extends AppCompatActivity {
                 case 4: startActivity(new Intent(this, TopicMonitoringActivity.class)); return true;
                 case 5: startActivity(new Intent(this, StationSelectionActivity.class)); return true;
                 case 6: startActivity(new Intent(this, SubscriptionsActivity.class)); return true;
+                case 11: startActivity(new Intent(this, MapActivity.class)); return true;
                 case 7: startActivity(new Intent(this, AlarmsActivity.class)); return true;
                 case 8: startActivity(new Intent(this, RangesActivity.class)); return true;
                 case 9: startActivity(new Intent(this, PublishAlertActivity.class)); return true;
