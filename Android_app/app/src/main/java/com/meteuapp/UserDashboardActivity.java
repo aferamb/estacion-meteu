@@ -56,21 +56,18 @@ public class UserDashboardActivity extends AppBaseActivity {
         if (swipe != null) swipe.setOnRefreshListener(this::loadLive);
 
         // limited UI: hide admin-only buttons, but keep monitoring options
-        Button btnLogout = findViewById(R.id.btn_logout);
         Button btnReadings = findViewById(R.id.btn_readings);
         Button btnReadingsQuery = findViewById(R.id.btn_readings_query);
         Button btnAlarms = findViewById(R.id.btn_alarms);
         Button btnRanges = findViewById(R.id.btn_ranges);
         Button btnSubscriptions = findViewById(R.id.btn_subscriptions);
         Button btnPublish = findViewById(R.id.btn_publish);
-        Button btnUsers = findViewById(R.id.btn_users);
         Button btnTopicMonitoring = findViewById(R.id.btn_topic_monitoring);
         Button btnStationMonitoring = findViewById(R.id.btn_station_monitoring);
 
         // show only allowed buttons for normal users
-        btnReadings.setOnClickListener(v -> startActivity(new Intent(this, ReadingsActivity.class)));
+        if (btnReadings != null) btnReadings.setOnClickListener(v -> startActivity(new Intent(this, ReadingsActivity.class)));
         if (btnReadingsQuery != null) btnReadingsQuery.setOnClickListener(v -> startActivity(new Intent(this, ReadingsQueryActivity.class)));
-        btnLogout.setOnClickListener(v -> doLogout());
 
         if (btnTopicMonitoring != null) btnTopicMonitoring.setOnClickListener(v -> startActivity(new Intent(this, TopicMonitoringActivity.class)));
         if (btnStationMonitoring != null) btnStationMonitoring.setOnClickListener(v -> startActivity(new Intent(this, StationSelectionActivity.class)));
@@ -80,7 +77,6 @@ public class UserDashboardActivity extends AppBaseActivity {
         if (btnRanges != null) btnRanges.setVisibility(android.view.View.GONE);
         if (btnSubscriptions != null) btnSubscriptions.setVisibility(android.view.View.GONE);
         if (btnPublish != null) btnPublish.setVisibility(android.view.View.GONE);
-        if (btnUsers != null) btnUsers.setVisibility(android.view.View.GONE);
 
         // Load on start
         loadLive();

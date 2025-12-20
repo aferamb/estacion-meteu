@@ -17,23 +17,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Refrescar button removed -->
-
-    <Button
-        android:id="@+id/btn_logout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="4dp"
-        android:text="Cerrar sesión"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_welcome" />
+    <!-- Botón 'Cerrar sesión' eliminado (ahora en el menú) -->
 
     <Button
         android:id="@+id/btn_readings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Readings"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/tv_welcome"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
@@ -43,6 +34,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Readings Query"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/tv_welcome"
         app:layout_constraintStart_toEndOf="@id/btn_readings"
         android:layout_marginStart="8dp"
@@ -55,6 +47,7 @@
         android:layout_marginTop="64dp"
         android:layout_marginEnd="144dp"
         android:text="Subscriptions"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/btn_readings"
@@ -65,6 +58,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Alarms"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/btn_readings"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
@@ -74,6 +68,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Ranges"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/btn_alarms"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
@@ -85,6 +80,7 @@
         android:layout_marginTop="4dp"
         android:layout_marginEnd="16dp"
         android:text="Usuarios"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btn_readings" />
 
@@ -95,6 +91,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="116dp"
         android:text="Monitor Topic"
+        android:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/btn_readings_query"
         app:layout_constraintTop_toBottomOf="@id/tv_welcome" />
 
@@ -105,20 +102,19 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="148dp"
         android:text="Publish Alert"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btn_subscriptions" />
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_live"
-        android:layout_width="350dp"
-        android:layout_height="457dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginTop="12dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintTop_toBottomOf="@id/tv_welcome"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_alarms"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -145,6 +141,10 @@
                     android:layout_height="match_parent"
                     android:orientation="vertical">
 
+                    <include
+                        android:id="@+id/header_messages"
+                        layout="@layout/item_messages_header" />
+
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_messages"
                         android:layout_width="wrap_content"
@@ -165,7 +165,7 @@
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="200dp"
                 android:fillViewport="true"
                 android:scrollbars="none">
 
@@ -196,13 +196,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Monitor Estación"
+        android:visibility="gone"
         tools:layout_editor_absoluteX="35dp"
         tools:layout_editor_absoluteY="214dp" />
 
-    <include
-        android:id="@+id/header_messages"
-        layout="@layout/item_messages_header"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="288dp" />
+    <!-- header_messages moved inside the messages scroll container -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

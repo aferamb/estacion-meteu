@@ -63,19 +63,16 @@ public class DashboardActivity extends AppBaseActivity {
         // show cached subscriptions count in welcome
         updateSubscriptionsCount();
 
-        Button btnLogout = findViewById(R.id.btn_logout);
-        Button btnUsers = findViewById(R.id.btn_users);
-        btnLogout.setOnClickListener(v -> doLogout());
-
-        findViewById(R.id.btn_readings).setOnClickListener(v -> startActivity(new android.content.Intent(this, ReadingsActivity.class)));
-        findViewById(R.id.btn_readings_query).setOnClickListener(v -> startActivity(new android.content.Intent(this, ReadingsQueryActivity.class)));
-        findViewById(R.id.btn_topic_monitoring).setOnClickListener(v -> startActivity(new android.content.Intent(this, TopicMonitoringActivity.class)));
-        findViewById(R.id.btn_station_monitoring).setOnClickListener(v -> startActivity(new android.content.Intent(this, StationSelectionActivity.class)));
-        findViewById(R.id.btn_subscriptions).setOnClickListener(v -> startActivity(new android.content.Intent(this, SubscriptionsActivity.class)));
-        findViewById(R.id.btn_alarms).setOnClickListener(v -> startActivity(new android.content.Intent(this, AlarmsActivity.class)));
-        findViewById(R.id.btn_publish).setOnClickListener(v -> startActivity(new android.content.Intent(this, PublishAlertActivity.class)));
-        findViewById(R.id.btn_users).setOnClickListener(v -> startActivity(new android.content.Intent(this, UsersActivity.class)));
-        findViewById(R.id.btn_ranges).setOnClickListener(v -> startActivity(new android.content.Intent(this, RangesActivity.class)));
+        View vBtn;
+        vBtn = findViewById(R.id.btn_readings); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, ReadingsActivity.class)));
+        vBtn = findViewById(R.id.btn_readings_query); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, ReadingsQueryActivity.class)));
+        vBtn = findViewById(R.id.btn_topic_monitoring); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, TopicMonitoringActivity.class)));
+        vBtn = findViewById(R.id.btn_station_monitoring); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, StationSelectionActivity.class)));
+        vBtn = findViewById(R.id.btn_subscriptions); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, SubscriptionsActivity.class)));
+        vBtn = findViewById(R.id.btn_alarms); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, AlarmsActivity.class)));
+        vBtn = findViewById(R.id.btn_publish); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, PublishAlertActivity.class)));
+        vBtn = findViewById(R.id.btn_users); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, UsersActivity.class)));
+        vBtn = findViewById(R.id.btn_ranges); if (vBtn != null) vBtn.setOnClickListener(v -> startActivity(new android.content.Intent(this, RangesActivity.class)));
 
         // Load on start
         loadLive();
