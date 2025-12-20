@@ -58,17 +58,21 @@ public class UserDashboardActivity extends AppBaseActivity {
         // limited UI: hide admin-only buttons
         Button btnLogout = findViewById(R.id.btn_logout);
         Button btnReadings = findViewById(R.id.btn_readings);
+        Button btnReadingsQuery = findViewById(R.id.btn_readings_query);
         Button btnAlarms = findViewById(R.id.btn_alarms);
+        Button btnRanges = findViewById(R.id.btn_ranges);
         Button btnSubscriptions = findViewById(R.id.btn_subscriptions);
         Button btnPublish = findViewById(R.id.btn_publish);
         Button btnUsers = findViewById(R.id.btn_users);
 
-        // show only allowed buttons
+        // show only allowed buttons for normal users
         btnReadings.setOnClickListener(v -> startActivity(new Intent(this, ReadingsActivity.class)));
-        btnAlarms.setOnClickListener(v -> startActivity(new Intent(this, AlarmsActivity.class)));
+        if (btnReadingsQuery != null) btnReadingsQuery.setOnClickListener(v -> startActivity(new Intent(this, ReadingsQueryActivity.class)));
         btnLogout.setOnClickListener(v -> doLogout());
 
-        // hide admin-only
+        // hide admin-only buttons for normal users
+        if (btnAlarms != null) btnAlarms.setVisibility(android.view.View.GONE);
+        if (btnRanges != null) btnRanges.setVisibility(android.view.View.GONE);
         if (btnSubscriptions != null) btnSubscriptions.setVisibility(android.view.View.GONE);
         if (btnPublish != null) btnPublish.setVisibility(android.view.View.GONE);
         if (btnUsers != null) btnUsers.setVisibility(android.view.View.GONE);
