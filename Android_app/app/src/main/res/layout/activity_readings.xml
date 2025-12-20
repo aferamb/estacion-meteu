@@ -9,7 +9,7 @@
         android:id="@+id/et_sensor"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Sensor ID (opcional)"
+        android:hint="Sensor ID (opcional | LABJAV08-G1)"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -18,8 +18,28 @@
         android:id="@+id/et_street"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Street ID (opcional)"
+        android:hint="Street ID (opcional | ST_0686)"
         app:layout_constraintTop_toBottomOf="@id/et_sensor"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/et_start"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="start (yyyy-MM-ddHH:mm:ss)"
+        app:layout_constraintTop_toBottomOf="@id/et_street"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/et_end"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="end (yyyy-MM-ddHH:mm:ss)"
+        app:layout_constraintTop_toBottomOf="@id/et_start"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
@@ -30,7 +50,7 @@
         android:layout_height="wrap_content"
         android:hint="limit"
         android:inputType="number"
-        app:layout_constraintTop_toBottomOf="@id/et_street"
+        app:layout_constraintTop_toBottomOf="@id/et_end"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
 
@@ -39,7 +59,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Consultar"
-        app:layout_constraintTop_toBottomOf="@id/et_street"
+        app:layout_constraintTop_toBottomOf="@id/et_end"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp" />
 
