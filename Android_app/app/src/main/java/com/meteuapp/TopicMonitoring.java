@@ -14,7 +14,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
-public class StreetMonitoring extends AppBaseActivity {
+public class TopicMonitoring extends AppBaseActivity {
     private String street_id;
     private String street_name;
     private MqttClient client;

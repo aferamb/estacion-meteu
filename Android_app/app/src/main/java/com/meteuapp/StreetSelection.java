@@ -90,7 +90,7 @@ public class StreetSelection extends AppBaseActivity {
             @Override
             public void onClick(View v) {
                 Log.i("meteu", "Boton pulsado: "+ spinner.getSelectedItem());
-                Intent intent = new Intent(StreetSelection.this, StreetMonitoring.class);
+                Intent intent = new Intent(StreetSelection.this, TopicMonitoring.class);
                 intent.putExtra("street_id", listaCalles.get((int) spinner.getSelectedItemId()).getId());
                 intent.putExtra("street_name", listaCalles.get((int) spinner.getSelectedItemId()).getNombre());
                 startActivity(intent);
