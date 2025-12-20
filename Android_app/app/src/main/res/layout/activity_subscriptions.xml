@@ -37,7 +37,7 @@
         android:id="@+id/btn_unsubscribe"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Desuscribir selección"
+        android:text="Desuscribir topic"
         android:enabled="false"
         android:layout_marginTop="8dp" />
 

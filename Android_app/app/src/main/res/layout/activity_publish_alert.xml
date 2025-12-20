@@ -12,43 +12,71 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Topic (opcional)"/>
+            android:text="Destino"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Usar suscripción" />
+
+            <Switch
+                android:id="@+id/sw_use_subscription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Suscripciones guardadas"/>
+        <Spinner
+            android:id="@+id/spinner_subs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="o Topic manual"/>
         <EditText
             android:id="@+id/et_topic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"/>
+            android:inputType="text"
+            android:hint="ej. sensors/street/sensorID" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Subscription (opcional)"/>
-        <EditText
-            android:id="@+id/et_subscription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Alert (opcional)"/>
+            android:text="Clave de alerta"/>
         <EditText
             android:id="@+id/et_alert"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"/>
+            android:inputType="text"
+            android:hint="WTH001" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Message (opcional)"/>
+            android:text="Mensaje JSON (opcional)"/>
         <EditText
             android:id="@+id/et_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textMultiLine"
-            android:minLines="3"/>
+            android:minLines="3"
+            android:hint='{"alerta":"WTH002","info":"..."}' />
 
         <Button
             android:id="@+id/btn_publish"

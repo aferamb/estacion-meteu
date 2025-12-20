@@ -16,8 +16,9 @@ import retrofit2.Response;
 public class AlarmsActivity extends AppBaseActivity {
 
     private EditText etSensor;
-    private androidx.recyclerview.widget.RecyclerView rvAlarms;
-    private com.meteuapp.adapters.AlarmAdapter alarmsAdapter;
+    private androidx.recyclerview.widget.RecyclerView rvAlarmsActive, rvAlarmsClosed;
+    private com.meteuapp.adapters.AlarmTableAdapter activeAdapter;
+    private com.meteuapp.adapters.AlarmTableAdapter closedAdapter;
     private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipe;
 
     @Override
@@ -26,11 +27,15 @@ public class AlarmsActivity extends AppBaseActivity {
         setContentView(R.layout.activity_alarms);
 
         etSensor = findViewById(R.id.et_sensor);
-        rvAlarms = findViewById(R.id.rv_alarms);
+        rvAlarmsActive = findViewById(R.id.rv_alarms_active);
+        rvAlarmsClosed = findViewById(R.id.rv_alarms_closed);
         swipe = findViewById(R.id.swipe);
-        alarmsAdapter = new com.meteuapp.adapters.AlarmAdapter();
-        rvAlarms.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
-        rvAlarms.setAdapter(alarmsAdapter);
+        activeAdapter = new com.meteuapp.adapters.AlarmTableAdapter();
+        closedAdapter = new com.meteuapp.adapters.AlarmTableAdapter();
+        rvAlarmsActive.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+        rvAlarmsActive.setAdapter(activeAdapter);
+        rvAlarmsClosed.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+        rvAlarmsClosed.setAdapter(closedAdapter);
         // refresh button removed from layout; pull-to-refresh via SwipeRefreshLayout remains
         swipe.setOnRefreshListener(this::refresh);
 
@@ -46,7 +51,14 @@ public class AlarmsActivity extends AppBaseActivity {
             public void onResponse(Call<List<Alarm>> call, Response<List<Alarm>> response) {
                 if (swipe != null) swipe.setRefreshing(false);
                 if (!response.isSuccessful() || response.body() == null) { return; }
-                alarmsAdapter.setItems(response.body());
+                // split into active and closed lists
+                List<Alarm> active = new java.util.ArrayList<>();
+                List<Alarm> closed = new java.util.ArrayList<>();
+                for (Alarm a : response.body()) {
+                    if (a.getActive() != null && a.getActive()) active.add(a); else closed.add(a);
+                }
+                activeAdapter.setItems(active);
+                closedAdapter.setItems(closed);
             }
 
             @Override

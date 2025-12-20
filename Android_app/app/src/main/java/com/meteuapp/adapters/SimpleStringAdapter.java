@@ -15,6 +15,7 @@ public class SimpleStringAdapter extends RecyclerView.Adapter<SimpleStringAdapte
     private List<String> items = new ArrayList<>();
     private OnItemLongClick longClick;
     private OnItemClick click;
+    private int selected = -1;
 
     public interface OnItemLongClick { void onLongClick(int position, String value); }
     public interface OnItemClick { void onClick(int position, String value); }
@@ -39,7 +40,19 @@ public class SimpleStringAdapter extends RecyclerView.Adapter<SimpleStringAdapte
             if (longClick != null) longClick.onLongClick(position, s);
             return true;
         });
-        holder.itemView.setOnClickListener(v -> { if (click != null) click.onClick(position, s); });
+        holder.itemView.setOnClickListener(v -> {
+            int old = selected;
+            selected = position;
+            notifyItemChanged(old);
+            notifyItemChanged(selected);
+            if (click != null) click.onClick(position, s);
+        });
+        // visual selected state
+        int bg = android.graphics.Color.TRANSPARENT;
+        if (position == selected) {
+            try { bg = androidx.core.content.ContextCompat.getColor(holder.itemView.getContext(), com.meteuapp.R.color.selected_item_bg); } catch (Exception ignored) {}
+        }
+        holder.itemView.setBackgroundColor(bg);
     }
 
     @Override

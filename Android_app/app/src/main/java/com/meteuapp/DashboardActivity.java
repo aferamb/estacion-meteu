@@ -72,6 +72,7 @@ public class DashboardActivity extends AppBaseActivity {
         findViewById(R.id.btn_alarms).setOnClickListener(v -> startActivity(new android.content.Intent(this, AlarmsActivity.class)));
         findViewById(R.id.btn_publish).setOnClickListener(v -> startActivity(new android.content.Intent(this, PublishAlertActivity.class)));
         findViewById(R.id.btn_users).setOnClickListener(v -> startActivity(new android.content.Intent(this, UsersActivity.class)));
+        findViewById(R.id.btn_ranges).setOnClickListener(v -> startActivity(new android.content.Intent(this, RangesActivity.class)));
 
         // Load on start
         loadLive();

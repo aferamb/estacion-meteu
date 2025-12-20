@@ -33,7 +33,7 @@ public class RangesActivity extends AppBaseActivity {
 
     private androidx.recyclerview.widget.RecyclerView rv;
     private ProgressBar progress;
-    private com.meteuapp.adapters.SimpleStringAdapter adapter;
+    private com.meteuapp.adapters.RangeAdapter adapter;
     private List<Range> ranges = new ArrayList<>();
     private Gson gson = new Gson();
 
@@ -46,13 +46,10 @@ public class RangesActivity extends AppBaseActivity {
         setContentView(R.layout.activity_ranges);
         rv = findViewById(R.id.rv_ranges);
         progress = findViewById(R.id.progress);
-        adapter = new com.meteuapp.adapters.SimpleStringAdapter();
+        adapter = new com.meteuapp.adapters.RangeAdapter();
         rv.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
         rv.setAdapter(adapter);
-        adapter.setOnItemClick((pos, val) -> {
-            Range r = ranges.get(pos);
-            showEditDialog(r);
-        });
+        adapter.setOnItemClick((pos, range) -> showEditDialog(range));
         androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipe = findViewById(R.id.swipe);
         swipe.setOnRefreshListener(this::fetchRangesFromServer);
 
@@ -82,9 +79,7 @@ public class RangesActivity extends AppBaseActivity {
     }
 
     private void refreshList() {
-        List<String> labels = new ArrayList<>();
-        for (Range r : ranges) labels.add(r.getParameter() + " — min=" + r.getMin() + " max=" + r.getMax());
-        adapter.setItems(labels);
+        adapter.setItems(ranges);
     }
 
     private void fetchRangesFromServer() {

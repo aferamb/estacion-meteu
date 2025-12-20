@@ -69,7 +69,7 @@ public class SubscriptionsActivity extends AppBaseActivity {
         btnUnsubscribe.setOnClickListener(v -> {
             if (selectedIndex >= 0 && selectedIndex < topics.size()) {
                 String topic = topics.get(selectedIndex);
-                postUnsubscribe(topic);
+                confirmUnsubscribe(topic);
             } else {
                 Toast.makeText(SubscriptionsActivity.this, "Selecciona un topic primero", Toast.LENGTH_SHORT).show();
             }
@@ -143,10 +143,19 @@ public class SubscriptionsActivity extends AppBaseActivity {
         b.setView(v);
         b.setPositiveButton("Añadir", (d, w) -> {
             String topic = et.getText().toString().trim();
-            if (!topic.isEmpty()) postSubscribe(topic);
+            if (!topic.isEmpty()) confirmSubscribe(topic);
         });
         b.setNegativeButton("Cancelar", null);
         b.show();
+    }
+
+    private void confirmSubscribe(String topic) {
+        new AlertDialog.Builder(this)
+                .setTitle("Confirmar suscripción")
+                .setMessage("¿Desea suscribirse a '" + topic + "'?")
+                .setPositiveButton("Sí", (d, w) -> postSubscribe(topic))
+                .setNegativeButton("No", null)
+                .show();
     }
 
     private void postSubscribe(String topic) {

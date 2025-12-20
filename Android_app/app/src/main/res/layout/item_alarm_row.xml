@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp">
+
+        <TextView
+            android:id="@+id/col_id"
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/col_sensor"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/col_parameter"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/col_value"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/col_triggered"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/col_resolved"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"/>
+
+    </LinearLayout>
+
