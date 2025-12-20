@@ -16,6 +16,22 @@ import java.util.List;
 
 public class ReadingTableAdapter extends RecyclerView.Adapter<ReadingTableAdapter.VH> {
     private List<SensorReading> items = new ArrayList<>();
+    // visibility flags for each column in the same order as the holder fields
+    private boolean[] visibleColumns;
+
+    public ReadingTableAdapter() {
+        // default: all visible (number of columns = 30)
+        visibleColumns = new boolean[30];
+        for (int i = 0; i < visibleColumns.length; i++) visibleColumns[i] = true;
+    }
+
+    public void setVisibleColumns(boolean[] flags) {
+        if (flags == null) return;
+        // copy up to length
+        int n = Math.min(flags.length, visibleColumns.length);
+        for (int i = 0; i < n; i++) visibleColumns[i] = flags[i];
+        notifyDataSetChanged();
+    }
 
     public void setItems(List<SensorReading> list) { items.clear(); if (list != null) items.addAll(list); notifyDataSetChanged(); }
 
@@ -59,6 +75,39 @@ public class ReadingTableAdapter extends RecyclerView.Adapter<ReadingTableAdapte
         holder.setText(holder.colRunInStatus, r == null ? null : doubleToStr(r.getRunInStatus()));
         holder.setText(holder.colSensorHeatCompTemp, r == null ? null : doubleToStr(r.getSensorHeatCompTemp()));
         holder.setText(holder.colSensorHeatCompHum, r == null ? null : doubleToStr(r.getSensorHeatCompHum()));
+
+        // apply visibility flags (same order as fields)
+        int idx = 0;
+        holder.colSensorId.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colSensorType.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colStreetId.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colTimestamp.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colLat.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colLong.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colAlt.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colDistrict.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colNeighborhood.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colTemp.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colHumid.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colAqi.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colLux.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colSoundDb.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colAtmHpa.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colUvIndex.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colBsecStatus.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colIaq.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colStaticIaq.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colCo2Eq.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colBreathVocEq.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colRawTemperature.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colRawHumidity.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colPressureHpa.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colGasResistanceOhm.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colGasPercentage.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colStabilizationStatus.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colRunInStatus.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colSensorHeatCompTemp.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
+        holder.colSensorHeatCompHum.setVisibility(visibleColumns[idx++]? View.VISIBLE: View.GONE);
     }
 
     private String doubleToStr(Double d) { return d == null ? "" : String.format("%.2f", d); }

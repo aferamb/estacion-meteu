@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -23,6 +24,8 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import androidx.appcompat.app.AlertDialog;
+import java.util.Arrays;
 
 public class ReadingsActivity extends AppBaseActivity {
 
@@ -31,6 +34,14 @@ public class ReadingsActivity extends AppBaseActivity {
     private RecyclerView rvReadings;
     private ReadingTableAdapter adapter;
     private SwipeRefreshLayout swipe;
+        // Column configuration
+        private static final String[] COLUMN_KEYS = new String[]{
+            "sensor_id","sensor_type","street_id","timestamp","lat","long","alt","district","neighborhood",
+            "temp","humid","aqi","lux","sound_db","atmhpa","uv_index","bsec_status","iaq","static_iaq",
+            "co2_eq","breath_voc_eq","raw_temperature","raw_humidity","pressure_hpa","gas_resistance_ohm","gas_percentage",
+            "stabilization_status","run_in_status","sensor_heat_comp_temp","sensor_heat_comp_hum"
+        };
+        private boolean[] visibleColumns;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,12 +53,17 @@ public class ReadingsActivity extends AppBaseActivity {
         etStart = findViewById(R.id.et_start);
         etEnd = findViewById(R.id.et_end);
         etLimit = findViewById(R.id.et_limit);
+        Button btnSelect = findViewById(R.id.btn_select_columns);
         Button btn = findViewById(R.id.btn_query);
 
         swipe = findViewById(R.id.swipe_readings);
         rvReadings = findViewById(R.id.rv_readings);
         rvReadings.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ReadingTableAdapter();
+        // default all visible
+        visibleColumns = new boolean[COLUMN_KEYS.length];
+        Arrays.fill(visibleColumns, true);
+        adapter.setVisibleColumns(visibleColumns);
         rvReadings.setAdapter(adapter);
 
         // Pull-to-refresh should perform the same query as the Consultar button
@@ -58,8 +74,34 @@ public class ReadingsActivity extends AppBaseActivity {
         etEnd.setOnClickListener(v -> showDateTimePicker(etEnd));
         etStart.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) showDateTimePicker(etStart); });
         etEnd.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) showDateTimePicker(etEnd); });
+        // Select columns dialog
+        btnSelect.setOnClickListener(v -> showColumnsDialog());
 
         btn.setOnClickListener(v -> query());
+    }
+
+    private void showColumnsDialog() {
+        AlertDialog.Builder b = new AlertDialog.Builder(this);
+        b.setTitle("Seleccionar columnas");
+        CharSequence[] names = COLUMN_KEYS;
+        boolean[] current = Arrays.copyOf(visibleColumns, visibleColumns.length);
+        b.setMultiChoiceItems(names, current, (dialog, which, isChecked) -> current[which] = isChecked);
+        b.setPositiveButton("OK", (dialog, which) -> {
+            visibleColumns = current;
+            adapter.setVisibleColumns(visibleColumns);
+            // update header visibility
+            View header = findViewById(R.id.header_readings);
+            if (header instanceof ViewGroup) {
+                ViewGroup hg = (ViewGroup) header;
+                int childCount = Math.min(hg.getChildCount(), visibleColumns.length);
+                for (int i = 0; i < childCount; i++) {
+                    View child = hg.getChildAt(i);
+                    child.setVisibility(visibleColumns[i] ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
+        b.setNegativeButton("Cancelar", null);
+        b.show();
     }
 
     private void query() {
