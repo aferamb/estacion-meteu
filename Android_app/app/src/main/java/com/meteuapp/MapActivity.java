@@ -52,6 +52,8 @@ public class MapActivity extends AppBaseActivity implements MqttManager.MqttList
     private boolean hasInitializedCenter = false;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private final Runnable clearInteractionRunnable = () -> isUserInteracting = false;
+    // If false (default) map view will never automatically recenter on incoming messages
+    private boolean autoCenterEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -302,15 +304,20 @@ public class MapActivity extends AppBaseActivity implements MqttManager.MqttList
                         } else {
                             m.setPosition(pos);
                         }
-                        // center map behavior:
-                        // - center & zoom the first time a marker is added
-                        // - on subsequent updates, only center if the user is not interacting
-                        if (!hasInitializedCenter) {
-                            map.getController().setCenter(pos);
-                            map.getController().setZoom(14.0);
-                            hasInitializedCenter = true;
-                        } else if (!isUserInteracting) {
-                            map.getController().setCenter(pos);
+                        // center map behavior: controlled by `autoCenterEnabled`.
+                        // When disabled (default) we only update/add markers and never change the viewport.
+                        if (autoCenterEnabled) {
+                            // - center & zoom the first time a marker is added
+                            // - on subsequent updates, only center if the user is not interacting
+                            if (!hasInitializedCenter) {
+                                map.getController().setCenter(pos);
+                                map.getController().setZoom(14.0);
+                                hasInitializedCenter = true;
+                            } else if (!isUserInteracting) {
+                                map.getController().setCenter(pos);
+                            }
+                        } else {
+                            // Auto-centering disabled: do nothing to camera, only update marker positions
                         }
                     } catch (Exception e) { Log.w("meteu","Error updating marker: " + e.getMessage()); }
                 });

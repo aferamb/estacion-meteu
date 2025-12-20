@@ -91,7 +91,7 @@ public class AppBaseActivity extends AppCompatActivity {
         menu.add(0, 3, 0, "Readings Query");
         menu.add(0, 4, 0, "Monitor Topic");
         menu.add(0, 5, 0, "Monitor Estación");
-        menu.add(0, 6, 0, "Subscriptions");
+        //menu.add(0, 6, 0, "Subscriptions");
         // Map view for subscriptions
         menu.add(0, 11, 0, "Mapa");
 
@@ -103,6 +103,7 @@ public class AppBaseActivity extends AppCompatActivity {
             menu.add(0, 8, 0, "Ranges");
             menu.add(0, 9, 0, "Publish Alert");
             menu.add(0, 10, 0, "Users");
+            menu.add(0, 6, 0, "Subscriptions");
         }
 
         menu.add(0, 99, 99, "Logout");

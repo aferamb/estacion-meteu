@@ -24,24 +24,21 @@
             </intent-filter>
         </activity>
         <activity android:name=".DashboardActivity" android:exported="false" />
-        <activity android:name=".StreetSelection" android:exported="false" />
-        <activity android:name=".StreetMonitoring" android:exported="false" />
-            <activity android:name=".LoginActivity" android:exported="true" />
-            <activity android:name=".DashboardActivity" android:exported="false" />
-            <activity android:name=".ReadingsActivity" android:exported="false" />
-            <activity android:name=".ReadingsQueryActivity" android:exported="false" />
-            <activity android:name=".TopicMonitoringActivity" android:exported="false" />
-            <activity android:name=".StationSelectionActivity" android:exported="false" />
-            <activity android:name=".StationLiveActivity" android:exported="false" />
-            <activity android:name=".SubscriptionsActivity" android:exported="false" />
-            <activity android:name=".PublishAlertActivity" android:exported="false" />
-            <activity android:name=".AlarmsActivity" android:exported="false" />
-            <activity android:name=".UsersActivity" android:exported="false" />
-            <activity android:name=".UserDashboardActivity" android:exported="false" />
-                <activity android:name=".RangesActivity" android:exported="false" />
-                <activity android:name=".MapActivity" android:exported="false" />
-                <!-- Add your Google Maps API key below (replace YOUR_API_KEY) -->
-                <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR_API_KEY" />
+        <activity android:name=".LoginActivity" android:exported="true" />
+        <activity android:name=".ReadingsActivity" android:exported="false" />
+        <activity android:name=".ReadingsQueryActivity" android:exported="false" />
+        <activity android:name=".TopicMonitoringActivity" android:exported="false" />
+        <activity android:name=".StationSelectionActivity" android:exported="false" />
+        <activity android:name=".StationLiveActivity" android:exported="false" />
+        <activity android:name=".SubscriptionsActivity" android:exported="false" />
+        <activity android:name=".PublishAlertActivity" android:exported="false" />
+        <activity android:name=".AlarmsActivity" android:exported="false" />
+        <activity android:name=".UsersActivity" android:exported="false" />
+        <activity android:name=".UserDashboardActivity" android:exported="false" />
+        <activity android:name=".RangesActivity" android:exported="false" />
+        <activity android:name=".MapActivity" android:exported="false" />
+        <!-- Add your Google Maps API key below (replace YOUR_API_KEY) -->
+        <!-- <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR_API_KEY" /> -->
     </application>
 
 </manifest>
