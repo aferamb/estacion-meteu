@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.TextUtils;
 
 import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
@@ -51,6 +52,8 @@ public class TopicMonitoringActivity extends AppBaseActivity {
     private DynamicTableAdapter adapter;
     private List<String> currentColumns = new ArrayList<>();
     private final Gson gson = new Gson();
+    private androidx.swiperefreshlayout.widget.SwipeRefreshLayout swipeMonitor;
+    private static final int ROW_LIMIT = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +71,19 @@ public class TopicMonitoringActivity extends AppBaseActivity {
         adapter = new DynamicTableAdapter();
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setAdapter(adapter);
-
+        swipeMonitor = findViewById(R.id.swipe_monitor);
+        if (swipeMonitor != null) {
+            swipeMonitor.setOnRefreshListener(() -> {
+                // On pull-to-refresh: clear the current table contents only
+                adapter.setRows(new ArrayList<>());
+                currentColumns = new ArrayList<>();
+                headerDynamic.removeAllViews();
+                // show transient message but keep status showing connected
+                Toast.makeText(TopicMonitoringActivity.this, "buffer limpiado", Toast.LENGTH_SHORT).show();
+                updateStatus("Conectado");
+                swipeMonitor.setRefreshing(false);
+            });
+        }
         loadSavedTopics();
 
         btnConnect.setOnClickListener(v -> startMonitor());
@@ -164,9 +179,10 @@ public class TopicMonitoringActivity extends AppBaseActivity {
                     if (!cols.equals(currentColumns)) {
                         currentColumns = cols;
                         rebuildHeader(cols);
-                        adapter.setColumns(cols);
+                            adapter.setColumns(cols);
                     }
-                    adapter.addRow(flat);
+                        // add row respecting limit
+                        adapter.addRowWithLimit(flat, ROW_LIMIT);
                 } catch (Exception e) {
                     Log.w("meteu", "UI update error: " + e.getMessage());
                 }
@@ -186,8 +202,10 @@ public class TopicMonitoringActivity extends AppBaseActivity {
             tv.setText(c);
             tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f);
             tv.setMinWidth(minPx);
+            tv.setSingleLine(true);
+            tv.setEllipsize(TextUtils.TruncateAt.END);
             tv.setPadding(pad, 0, pad, 0);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(minPx, LinearLayout.LayoutParams.WRAP_CONTENT);
             lp.setMargins(pad, 0, 0, 0);
             tv.setLayoutParams(lp);
             headerDynamic.addView(tv);

@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.util.TypedValue;
+import android.text.TextUtils;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -25,6 +26,20 @@ public class DynamicTableAdapter extends RecyclerView.Adapter<DynamicTableAdapte
     public void setRows(List<Map<String, Object>> r) { this.rows.clear(); if (r != null) this.rows.addAll(r); notifyDataSetChanged(); }
     public void addRow(Map<String,Object> row) { this.rows.add(0, row); notifyItemInserted(0); }
 
+    // keep only the most recent N rows to avoid unbounded memory growth
+    public void addRowWithLimit(Map<String,Object> row, int limit) {
+        if (limit <= 0) limit = 100;
+        // insert at top
+        this.rows.add(0, row);
+        // if exceeded, remove oldest
+        if (this.rows.size() > limit) {
+            int last = this.rows.size() - 1;
+            this.rows.remove(last);
+            notifyItemRemoved(last);
+        }
+        notifyItemInserted(0);
+    }
+
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -41,13 +56,15 @@ public class DynamicTableAdapter extends RecyclerView.Adapter<DynamicTableAdapte
             tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f);
             Object v = row.get(col);
             tv.setText(v == null ? "" : String.valueOf(v));
-            // set consistent min width and padding so columns align with header
+            // set consistent fixed width and padding so columns align with header
             int minDp = 120;
             int minPx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, minDp, holder.container.getResources().getDisplayMetrics());
             tv.setMinWidth(minPx);
             int pad = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, holder.container.getResources().getDisplayMetrics());
             tv.setPadding(pad, 0, pad, 0);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            tv.setSingleLine(true);
+            tv.setEllipsize(TextUtils.TruncateAt.END);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(minPx, LinearLayout.LayoutParams.WRAP_CONTENT);
             lp.setMargins(pad, 0, 0, 0);
             tv.setLayoutParams(lp);
             holder.container.addView(tv);
