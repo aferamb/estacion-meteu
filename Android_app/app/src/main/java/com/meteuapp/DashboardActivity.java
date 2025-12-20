@@ -68,6 +68,7 @@ public class DashboardActivity extends AppBaseActivity {
         btnLogout.setOnClickListener(v -> doLogout());
 
         findViewById(R.id.btn_readings).setOnClickListener(v -> startActivity(new android.content.Intent(this, ReadingsActivity.class)));
+        findViewById(R.id.btn_readings_query).setOnClickListener(v -> startActivity(new android.content.Intent(this, ReadingsQueryActivity.class)));
         findViewById(R.id.btn_subscriptions).setOnClickListener(v -> startActivity(new android.content.Intent(this, SubscriptionsActivity.class)));
         findViewById(R.id.btn_alarms).setOnClickListener(v -> startActivity(new android.content.Intent(this, AlarmsActivity.class)));
         findViewById(R.id.btn_publish).setOnClickListener(v -> startActivity(new android.content.Intent(this, PublishAlertActivity.class)));

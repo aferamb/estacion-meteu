@@ -29,6 +29,7 @@
             <activity android:name=".LoginActivity" android:exported="true" />
             <activity android:name=".DashboardActivity" android:exported="false" />
             <activity android:name=".ReadingsActivity" android:exported="false" />
+            <activity android:name=".ReadingsQueryActivity" android:exported="false" />
             <activity android:name=".SubscriptionsActivity" android:exported="false" />
             <activity android:name=".PublishAlertActivity" android:exported="false" />
             <activity android:name=".AlarmsActivity" android:exported="false" />

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Meteu App</string>
+    <string name="prompt_filter">Filter column</string>
 </resources>
